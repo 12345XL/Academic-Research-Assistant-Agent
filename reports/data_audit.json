@@ -1,0 +1,104 @@
+{
+  "dataset": "QASPER",
+  "version": "qasper-v0.3",
+  "generated_at": "2026-09-18T04:06:24.020230+00:00",
+  "source_url": "https://qasper-dataset.s3.us-west-2.amazonaws.com/qasper-train-dev-v0.3.tgz",
+  "archive_sha256": "a28fdf966db827bcee3d873107d6b6669864fb7ca8fbf73a192f5e39191bdb5a",
+  "checksum_provenance": "Observed official download on 2026-09-18; pinned locally, not publisher-signed",
+  "archive_members": {
+    "qasper-train-v0.3.json": {
+      "bytes": 31969387,
+      "sha256": "9458bfe76074a8fa8d1685af02bcc73537aa6d338ad20591dfaff1946bc88bf4"
+    },
+    "qasper-dev-v0.3.json": {
+      "bytes": 11398686,
+      "sha256": "2ae7ee62a65b1c4225791c70de80c2aad4e8998cf1fd4f09a53103db4f21af93"
+    }
+  },
+  "splits": {
+    "train": {
+      "abstract_paragraphs": 888,
+      "ambiguous_text_evidence_items": 6,
+      "annotations": 2675,
+      "annotations_missing_fields": 0,
+      "annotations_with_empty_evidence": 367,
+      "annotations_with_figure_evidence": 327,
+      "annotations_with_unmapped_evidence": 76,
+      "answerable_annotations": 2394,
+      "answerable_annotations_with_empty_evidence": 86,
+      "body_paragraphs": 46882,
+      "empty_body_paragraphs_skipped": 805,
+      "figure_evidence_items": 386,
+      "mapped_text_evidence_items": 3676,
+      "missing_paper_fields": 0,
+      "papers": 888,
+      "paragraphs": 47770,
+      "questions": 2593,
+      "questions_with_answerability_disagreement": 7,
+      "questions_with_figure_evidence": 320,
+      "questions_with_mapped_text_evidence": 2098,
+      "questions_with_multiple_annotations": 82,
+      "questions_with_unmapped_evidence": 74,
+      "questions_without_annotations": 0,
+      "unanswerable_annotations": 281,
+      "unknown_answerability_annotations": 0,
+      "unmapped_text_evidence_items": 147
+    },
+    "dev": {
+      "abstract_paragraphs": 281,
+      "ambiguous_text_evidence_items": 12,
+      "annotations": 1764,
+      "annotations_missing_fields": 0,
+      "annotations_with_empty_evidence": 212,
+      "annotations_with_figure_evidence": 212,
+      "annotations_with_unmapped_evidence": 52,
+      "answerable_annotations": 1601,
+      "answerable_annotations_with_empty_evidence": 49,
+      "body_paragraphs": 13266,
+      "empty_body_paragraphs_skipped": 328,
+      "figure_evidence_items": 253,
+      "mapped_text_evidence_items": 2426,
+      "missing_paper_fields": 0,
+      "papers": 281,
+      "paragraphs": 13547,
+      "questions": 1005,
+      "questions_with_answerability_disagreement": 75,
+      "questions_with_figure_evidence": 164,
+      "questions_with_mapped_text_evidence": 888,
+      "questions_with_multiple_annotations": 744,
+      "questions_with_unmapped_evidence": 45,
+      "questions_without_annotations": 0,
+      "unanswerable_annotations": 163,
+      "unknown_answerability_annotations": 0,
+      "unmapped_text_evidence_items": 129
+    }
+  },
+  "integrity": {
+    "train_dev_paper_id_overlap": 0,
+    "train_dev_question_id_overlap": 0,
+    "test_downloaded": false,
+    "test_answers_accessed": false,
+    "qa_annotations_in_retrieval_corpus": false
+  },
+  "outputs": {
+    "data/processed/papers.jsonl": {
+      "rows": 1169,
+      "sha256": "3cf51fb9f854a1636ce0e385a04c6f53e0b52e671ada3371817e15e1896fbd44"
+    },
+    "data/processed/paragraphs.jsonl": {
+      "rows": 61317,
+      "sha256": "7b22f0e30f62175ca6a4e67e4690db94fb4e9e430590bb90f59442700fc66293"
+    },
+    "data/processed/questions.jsonl": {
+      "rows": 3598,
+      "sha256": "4c291f6101490e6230dbe863e4cae885324bd99fd075e9820a84f4e05ae6de65"
+    }
+  },
+  "limitations": [
+    "Text paragraphs and abstracts only; figure/table images are not downloaded or interpreted.",
+    "Unmapped or empty evidence is retained, never converted into an unanswerable label.",
+    "Multiple annotations, conflicting answerability and duplicate paragraph mappings are retained.",
+    "Questions and gold annotations are offline evaluation inputs; never use them as retrieval documents.",
+    "Source is structured QASPER text, not a PDF parsing evaluation."
+  ]
+}
