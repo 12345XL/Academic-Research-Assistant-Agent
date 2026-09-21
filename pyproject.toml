@@ -4,10 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "academic-research-assistant"
-version = "0.1.0"
+version = "0.2.0"
 description = "Evidence-first research assistant: QASPER retrieval baseline and staged Agent engineering"
 requires-python = ">=3.11"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "psycopg[binary]>=3.2,<4",
+    "boto3>=1.35,<2",
+    "python-dotenv>=1,<2",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
@@ -17,6 +23,9 @@ research-agent = "research_agent.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+research_agent = ["migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -13,3 +13,7 @@ uploads/
 node_modules/
 dist/
 build/
+.local/
+*.tsbuildinfo
+frontend/playwright-report/
+frontend/test-results/

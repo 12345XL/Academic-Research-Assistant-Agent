@@ -1,3 +1,3 @@
-"""Research assistant; P1 intentionally retrieves evidence without generating claims."""
+"""Research assistant: evidence retrieval with a persistent research workbench."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
