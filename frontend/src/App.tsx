@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Icon from './Icon';
 import { downloadSource, errorMessage, isAbort, loadContext, request } from './api';
 import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, System } from './api';
 
 const PAGE_SIZE = 12;
+const LIBRARY_WIDTH_KEY = 'research-agent-library-width';
+const MIN_LIBRARY_WIDTH = 230;
+const MAX_LIBRARY_WIDTH = 560;
+const MIN_RESEARCH_WIDTH = 440;
+const RESIZE_HANDLE_WIDTH = 8;
 const number = (value: number | undefined) => value === undefined ? '—' : value.toLocaleString('zh-CN');
 const date = (value?: string | null) => value ? new Date(value.replace(' ', 'T')).toLocaleString('zh-CN', { hour12: false }) : '—';
 const paperDate = (value?: string | null) => value ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(value)) : '日期未知';
@@ -72,6 +77,16 @@ function StorageView({ system, jobs, loading, error, jobsError, refresh }: {
 }
 
 export default function App() {
+  const workbenchRef = useRef<HTMLDivElement>(null);
+  const resizingRef = useRef(false);
+  const [resizingPane, setResizingPane] = useState(false);
+  const [libraryWidth, setLibraryWidth] = useState(() => {
+    const fallback = window.innerWidth <= 1100 ? 285 : 326;
+    try {
+      const saved = Number(window.localStorage.getItem(LIBRARY_WIDTH_KEY));
+      return Number.isFinite(saved) && saved >= MIN_LIBRARY_WIDTH && saved <= MAX_LIBRARY_WIDTH ? saved : fallback;
+    } catch { return fallback; }
+  });
   const [tab, setTab] = useState<'research' | 'storage'>('research');
   const [system, setSystem] = useState<System | null>(null);
   const [jobs, setJobs] = useState<Ingestion[]>([]);
@@ -138,6 +153,63 @@ export default function App() {
 
   useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); }, []);
 
+  useEffect(() => {
+    try { window.localStorage.setItem(LIBRARY_WIDTH_KEY, String(libraryWidth)); } catch { /* storage may be unavailable */ }
+  }, [libraryWidth]);
+
+  useEffect(() => {
+    const fitToViewport = () => {
+      if (window.innerWidth <= 600) return;
+      const width = workbenchRef.current?.getBoundingClientRect().width;
+      if (!width) return;
+      const maximum = Math.max(MIN_LIBRARY_WIDTH,
+        Math.min(MAX_LIBRARY_WIDTH, width - MIN_RESEARCH_WIDTH - RESIZE_HANDLE_WIDTH));
+      setLibraryWidth(current => Math.round(Math.max(MIN_LIBRARY_WIDTH, Math.min(maximum, current))));
+    };
+    fitToViewport();
+    window.addEventListener('resize', fitToViewport);
+    return () => window.removeEventListener('resize', fitToViewport);
+  }, []);
+
+  function clampedLibraryWidth(clientX: number): number {
+    const rect = workbenchRef.current?.getBoundingClientRect();
+    if (!rect || !rect.width) return libraryWidth;
+    const available = Math.max(MIN_LIBRARY_WIDTH, Math.min(MAX_LIBRARY_WIDTH,
+      rect.width - MIN_RESEARCH_WIDTH - RESIZE_HANDLE_WIDTH));
+    return Math.round(Math.max(MIN_LIBRARY_WIDTH, Math.min(available, clientX - rect.left)));
+  }
+
+  function startPaneResize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (window.innerWidth <= 600) return;
+    event.preventDefault();
+    resizingRef.current = true; setResizingPane(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function movePaneResize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (resizingRef.current) setLibraryWidth(clampedLibraryWidth(event.clientX));
+  }
+
+  function stopPaneResize(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!resizingRef.current) return;
+    resizingRef.current = false; setResizingPane(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
+  function resizePaneWithKeyboard(event: ReactKeyboardEvent<HTMLDivElement>) {
+    let next: number | null = null;
+    if (event.key === 'ArrowLeft') next = libraryWidth - 16;
+    if (event.key === 'ArrowRight') next = libraryWidth + 16;
+    if (event.key === 'Home') next = MIN_LIBRARY_WIDTH;
+    if (event.key === 'End') next = MAX_LIBRARY_WIDTH;
+    if (next === null) return;
+    event.preventDefault();
+    const rect = workbenchRef.current?.getBoundingClientRect();
+    const maximum = rect?.width ? Math.max(MIN_LIBRARY_WIDTH,
+      Math.min(MAX_LIBRARY_WIDTH, rect.width - MIN_RESEARCH_WIDTH - RESIZE_HANDLE_WIDTH)) : MAX_LIBRARY_WIDTH;
+    setLibraryWidth(Math.round(Math.max(MIN_LIBRARY_WIDTH, Math.min(maximum, next))));
+  }
+
   function selectPaper(paper: Paper) {
     if (selected?.paper_id === paper.paper_id) return;
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
@@ -198,7 +270,7 @@ export default function App() {
       <nav className="main-nav" aria-label="主导航"><button aria-current={tab === 'research' ? 'page' : undefined} className={tab === 'research' ? 'active' : ''} onClick={() => setTab('research')}><Icon name="book" />论文工作台</button><button aria-current={tab === 'storage' ? 'page' : undefined} className={tab === 'storage' ? 'active' : ''} onClick={() => setTab('storage')}><Icon name="database" />数据与存储</button></nav>
       <button className={`connection-state ${connected ? 'connected' : ''}`} onClick={() => setTab('storage')}><i /><span>{systemLoading ? '连接中' : systemError ? '服务连接异常' : connected ? '存储已连接' : system?.mode === 'files' ? '本地文件模式' : '存储待检查'}</span><Icon name="chevron" width="12" height="12" /></button>
     </header>
-    {tab === 'storage' ? <StorageView system={system} jobs={jobs} loading={systemLoading} error={systemError} jobsError={jobsError} refresh={() => setSystemRevision(value => value + 1)} /> : <div className="workbench">
+    {tab === 'storage' ? <StorageView system={system} jobs={jobs} loading={systemLoading} error={systemError} jobsError={jobsError} refresh={() => setSystemRevision(value => value + 1)} /> : <div ref={workbenchRef} className={`workbench ${resizingPane ? 'resizing' : ''}`} style={{ '--library-width': `${libraryWidth}px` } as CSSProperties}>
       <aside className="paper-library" aria-label="论文库">
         <div className="library-heading"><div><p className="eyebrow">YOUR RESEARCH LIBRARY</p><h1>论文库 <span>{number(system?.corpus.papers)}</span></h1></div><span className="source-mark">QASPER</span></div>
         <div className="search-field"><Icon name="search" /><input aria-label="搜索论文标题" value={search} onChange={event => setSearch(event.target.value)} placeholder="搜索论文标题…" maxLength={200} />{search && <button className="icon-button" aria-label="清空搜索" onClick={() => setSearch('')}><Icon name="close" width="14" height="14" /></button>}</div>
@@ -210,6 +282,7 @@ export default function App() {
         <div className="pagination"><span>{total ? `${offset + 1}–${Math.min(offset + PAGE_SIZE, total)} / ${number(total)}` : '0 篇论文'}</span><div><button className="icon-button previous" aria-label="上一页论文" disabled={offset === 0 || listLoading} onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))}><Icon name="chevron" /></button><button className="icon-button" aria-label="下一页论文" disabled={offset + PAGE_SIZE >= total || listLoading} onClick={() => setOffset(value => value + PAGE_SIZE)}><Icon name="chevron" /></button></div></div>
         <div className="library-note"><Icon name="info" /><p>方向取自 arXiv 主分类。先选方向，再在该方向内排序；CCF 未分级不代表低级别。</p></div>
       </aside>
+      <div className="pane-resizer" role="separator" aria-label="调整论文库与正文区宽度" aria-orientation="vertical" aria-valuemin={MIN_LIBRARY_WIDTH} aria-valuemax={MAX_LIBRARY_WIDTH} aria-valuenow={libraryWidth} tabIndex={0} title="拖动调整左右占比；双击恢复默认宽度" onPointerDown={startPaneResize} onPointerMove={movePaneResize} onPointerUp={stopPaneResize} onPointerCancel={stopPaneResize} onLostPointerCapture={event => { if (resizingRef.current) stopPaneResize(event); }} onKeyDown={resizePaneWithKeyboard} onDoubleClick={() => setLibraryWidth(window.innerWidth <= 1100 ? 285 : 326)}><span /></div>
       <main className="research-main">
         <div className="research-breadcrumb"><span>论文工作台</span><Icon name="chevron" width="12" height="12" /><span>原文证据检索</span><span className="mode-tag">BM25 · 当前阶段</span></div>
         {selected ? <>

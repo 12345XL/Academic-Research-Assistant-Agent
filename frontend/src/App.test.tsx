@@ -23,7 +23,7 @@ function setupFetch(retrieve?: (options: RequestInit) => Promise<Response>) {
   return fetch;
 }
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); window.localStorage.clear(); vi.unstubAllGlobals(); });
 
 describe('research session state', () => {
   it('clears previous evidence and the question when selecting another paper', async () => {
@@ -93,6 +93,20 @@ describe('research session state', () => {
       const url = String(call[0]);
       return url.includes('direction=nlp') && url.includes('sort=submitted_newest');
     })).toBe(true));
+  });
+
+  it('resizes the two panes with an accessible separator and remembers the width', async () => {
+    setupFetch();
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    const separator = screen.getByRole('separator', { name: '调整论文库与正文区宽度' });
+    const initial = Number(separator.getAttribute('aria-valuenow'));
+    fireEvent.keyDown(separator, { key: 'ArrowRight' });
+    await waitFor(() => expect(separator.getAttribute('aria-valuenow')).toBe(String(initial + 16)));
+    expect(separator.parentElement?.style.getPropertyValue('--library-width')).toBe(`${initial + 16}px`);
+    await waitFor(() => expect(window.localStorage.getItem('research-agent-library-width')).toBe(String(initial + 16)));
+    fireEvent.doubleClick(separator);
+    expect(separator.getAttribute('aria-valuenow')).toBe('285');
   });
 
   it('keeps the source context open under StrictMode effect cleanup', async () => {
