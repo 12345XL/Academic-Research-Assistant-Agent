@@ -6,6 +6,7 @@ import hashlib
 import re
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
@@ -131,12 +132,29 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
 
     @app.get("/api/v1/papers")
     def papers(q: str = Query(default="", max_length=200), limit: int = Query(20, ge=1, le=100),
-               offset: int = Query(0, ge=0)):
+               offset: int = Query(0, ge=0),
+               sort: Literal["id_asc", "id_desc", "title_asc", "title_desc",
+                             "submitted_newest", "submitted_oldest", "ccf_best"] = "id_asc"):
         if persistent:
-            return repository.list_papers(q=q, limit=limit, offset=offset)
-        items = sorted(service().papers.values(), key=lambda p: p["paper_id"])
+            return repository.list_papers(q=q, limit=limit, offset=offset, sort=sort)
+        items = list(service().papers.values())
         if q:
             items = [p for p in items if q.lower() in p["title"].lower()]
+        if sort == "id_desc":
+            items.sort(key=lambda p: p["paper_id"], reverse=True)
+        elif sort in ("title_asc", "title_desc"):
+            items.sort(key=lambda p: (p["title"].casefold(), p["paper_id"]),
+                       reverse=sort == "title_desc")
+        elif sort in ("submitted_newest", "submitted_oldest"):
+            # P1 compatibility files contain modern arXiv IDs but no timestamp.
+            # YYMM + sequence is a deterministic month/order approximation only.
+            items.sort(key=lambda p: p["paper_id"],
+                       reverse=sort == "submitted_newest")
+        elif sort == "ccf_best":
+            items.sort(key=lambda p: ({"A": 0, "B": 1, "C": 2}.get(p.get("ccf_level"), 3),
+                                      p["paper_id"]))
+        else:
+            items.sort(key=lambda p: p["paper_id"])
         return {"total": len(items), "items": items[offset:offset + limit]}
 
     @app.get("/api/v1/papers/{paper_id}")

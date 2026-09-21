@@ -7,6 +7,13 @@ import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, System } f
 const PAGE_SIZE = 12;
 const number = (value: number | undefined) => value === undefined ? '—' : value.toLocaleString('zh-CN');
 const date = (value?: string | null) => value ? new Date(value.replace(' ', 'T')).toLocaleString('zh-CN', { hour12: false }) : '—';
+const paperDate = (value?: string | null) => value ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(value)) : '日期未知';
+const SORT_LABELS = {
+  id_asc: '论文编号 ↑', id_desc: '论文编号 ↓',
+  submitted_newest: 'arXiv 提交时间：新到旧', submitted_oldest: 'arXiv 提交时间：旧到新',
+  ccf_best: 'CCF 级别：A → 未分级', title_asc: '标题 A → Z', title_desc: '标题 Z → A',
+} as const;
+type PaperSort = keyof typeof SORT_LABELS;
 
 function ErrorNotice({ message, retry }: { message: string; retry?: () => void }) {
   return <div className="error-notice" role="alert"><Icon name="info" /><span>{message}</span>{retry && <button onClick={retry}>重试</button>}</div>;
@@ -66,6 +73,7 @@ export default function App() {
   const [systemRevision, setSystemRevision] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('');
+  const [sort, setSort] = useState<PaperSort>('id_asc');
   const [offset, setOffset] = useState(0);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [total, setTotal] = useState(0);
@@ -112,12 +120,12 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
     setListLoading(true); setListError('');
-    request<Page<Paper>>(`/api/v1/papers?q=${encodeURIComponent(filter)}&limit=${PAGE_SIZE}&offset=${offset}`, controller.signal)
+    request<Page<Paper>>(`/api/v1/papers?q=${encodeURIComponent(filter)}&sort=${sort}&limit=${PAGE_SIZE}&offset=${offset}`, controller.signal)
       .then(page => { if (!controller.signal.aborted) { setPapers(page.items); setTotal(page.total); setSelected(current => current || page.items[0] || null); } })
       .catch(error => { if (!controller.signal.aborted && !isAbort(error)) setListError(errorMessage(error)); })
       .finally(() => { if (!controller.signal.aborted) setListLoading(false); });
     return () => controller.abort();
-  }, [filter, offset, listRevision]);
+  }, [filter, sort, offset, listRevision]);
 
   useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); }, []);
 
@@ -126,6 +134,13 @@ export default function App() {
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
     setSelected(paper); setQuestion(''); setResult(null); setRetrieving(false); setRetrieveError('');
     setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
+  }
+
+  function changeSort(value: PaperSort) {
+    if (value === sort) return;
+    retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
+    setSort(value); setOffset(0); setSelected(null); setQuestion(''); setResult(null);
+    setRetrieving(false); setRetrieveError(''); setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
   }
 
   async function retrieve(event?: FormEvent) {
@@ -171,17 +186,17 @@ export default function App() {
       <aside className="paper-library" aria-label="论文库">
         <div className="library-heading"><div><p className="eyebrow">YOUR RESEARCH LIBRARY</p><h1>论文库 <span>{number(system?.corpus.papers)}</span></h1></div><span className="source-mark">QASPER</span></div>
         <div className="search-field"><Icon name="search" /><input aria-label="搜索论文标题" value={search} onChange={event => setSearch(event.target.value)} placeholder="搜索论文标题…" maxLength={200} />{search && <button className="icon-button" aria-label="清空搜索" onClick={() => setSearch('')}><Icon name="close" width="14" height="14" /></button>}</div>
-        <div className="library-meta"><span>{filter ? `搜索结果 · ${number(total)} 篇` : '全部论文'}</span><span>按论文编号排序</span></div>
+        <div className="library-meta"><span>{filter ? `搜索结果 · ${number(total)} 篇` : '全部论文'}</span><label>排序<select aria-label="论文排序方式" value={sort} onChange={event => changeSort(event.target.value as PaperSort)}>{Object.entries(SORT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
         <div className="paper-list" aria-busy={listLoading}>
-          {listError ? <ErrorNotice message={listError} retry={() => setListRevision(value => value + 1)} /> : listLoading ? <div className="paper-skeletons" role="status" aria-label="正在读取论文">{[1, 2, 3, 4, 5].map(item => <div className="paper-skeleton" key={item}><i /><i /><i /></div>)}</div> : papers.length ? papers.map(paper => <button className={`paper-item ${selected?.paper_id === paper.paper_id ? 'selected' : ''}`} key={paper.paper_id} onClick={() => selectPaper(paper)} aria-pressed={selected?.paper_id === paper.paper_id}><div className="paper-item-top"><span className="paper-number mono">{paper.paper_id}</span><Icon name="file" width="15" height="15" /></div><h2 lang="en">{paper.title}</h2><div className="paper-item-foot"><span>NLP · {paper.source.toUpperCase()}</span><Icon name="arrow" width="16" height="16" /></div></button>) : <div className="library-empty"><Icon name="search" /><h2>没有找到论文</h2><p>{filter ? '换一个标题关键词试试。' : '导入论文后，即可开始检索。'}</p></div>}
+          {listError ? <ErrorNotice message={listError} retry={() => setListRevision(value => value + 1)} /> : listLoading ? <div className="paper-skeletons" role="status" aria-label="正在读取论文">{[1, 2, 3, 4, 5].map(item => <div className="paper-skeleton" key={item}><i /><i /><i /></div>)}</div> : papers.length ? papers.map(paper => <button className={`paper-item ${selected?.paper_id === paper.paper_id ? 'selected' : ''}`} key={paper.paper_id} onClick={() => selectPaper(paper)} aria-pressed={selected?.paper_id === paper.paper_id}><div className="paper-item-top"><span className="paper-number mono">{paper.paper_id}</span>{paper.ccf_level ? <span className={`ccf-badge ccf-${paper.ccf_level.toLowerCase()}`} title="CCF 对论文发表载体的目录级别；不代表论文质量评分">{`CCF ${paper.ccf_level}`}</span> : <Icon name="file" width="15" height="15" />}</div><h2 lang="en">{paper.title}</h2><div className="paper-item-foot"><span>{paperDate(paper.arxiv_submitted_at)} · {paper.ccf_venue || '未分级'}</span><Icon name="arrow" width="16" height="16" /></div></button>) : <div className="library-empty"><Icon name="search" /><h2>没有找到论文</h2><p>{filter ? '换一个标题关键词试试。' : '导入论文后，即可开始检索。'}</p></div>}
         </div>
         <div className="pagination"><span>{total ? `${offset + 1}–${Math.min(offset + PAGE_SIZE, total)} / ${number(total)}` : '0 篇论文'}</span><div><button className="icon-button previous" aria-label="上一页论文" disabled={offset === 0 || listLoading} onClick={() => setOffset(value => Math.max(0, value - PAGE_SIZE))}><Icon name="chevron" /></button><button className="icon-button" aria-label="下一页论文" disabled={offset + PAGE_SIZE >= total || listLoading} onClick={() => setOffset(value => value + PAGE_SIZE)}><Icon name="chevron" /></button></div></div>
-        <div className="library-note"><Icon name="layers" /><p>从论文出发，让每个发现<br />回到可核对的原文。</p></div>
+        <div className="library-note"><Icon name="info" /><p>时间为首次提交 arXiv 的日期。CCF 是已核实发表载体的目录级别；未分级不代表低级别。</p></div>
       </aside>
       <main className="research-main">
         <div className="research-breadcrumb"><span>论文工作台</span><Icon name="chevron" width="12" height="12" /><span>原文证据检索</span><span className="mode-tag">BM25 · 当前阶段</span></div>
         {selected ? <>
-          <section className="paper-overview" aria-labelledby="paper-heading"><div className="paper-overline"><span className="tag green">当前论文</span><span className="mono">{selected.paper_id}</span><span className="paper-version">{selected.version}</span></div><h1 id="paper-heading" lang="en">{selected.title}</h1>
+          <section className="paper-overview" aria-labelledby="paper-heading"><div className="paper-overline"><span className="tag green">当前论文</span><span className="mono">{selected.paper_id}</span><span>{paperDate(selected.arxiv_submitted_at)} 首次提交 arXiv</span>{selected.ccf_level && <span className={`ccf-badge ccf-${selected.ccf_level.toLowerCase()}`} title="CCF 对发表载体的目录级别；不代表论文质量评分">{selected.ccf_venue} · CCF {selected.ccf_level}</span>}<span className="paper-version">{selected.version}</span></div><h1 id="paper-heading" lang="en">{selected.title}</h1>
             <p className={`paper-abstract ${abstractExpanded ? 'expanded' : ''}`} lang="en">{selected.abstract || '这篇论文没有提供摘要。'}</p>
             <div className="paper-actions"><button className="text-button" onClick={() => setAbstractExpanded(value => !value)} aria-expanded={abstractExpanded}>{abstractExpanded ? '收起摘要' : '展开摘要'}<Icon name="chevron" className={abstractExpanded ? 'rotate-up' : 'rotate-down'} width="13" height="13" /></button><button className="text-button" onClick={download} disabled={downloading || system?.object_store.status !== 'ready'} title={system?.object_store.status !== 'ready' ? '对象存储连接后可下载' : '下载已校验的结构化原文 JSON'}><Icon name="download" width="15" height="15" />{downloading ? '正在下载…' : '下载结构化原文'}</button></div>
             {downloadError && <ErrorNotice message={downloadError} retry={download} />}

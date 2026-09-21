@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-09-21T08:48:10.635620+00:00",
+  "paper_count": 1169,
+  "arxiv_submitted_dates": 1169,
+  "ccf_venues": 33,
+  "ccf_level_counts": {
+    "A": 12,
+    "B": 20,
+    "C": 1,
+    "unclassified": 1136
+  },
+  "date_source": "https://export.arxiv.org/api/query",
+  "date_snapshot_at": "2026-09-21T08:26:15.933606+00:00",
+  "date_snapshot_sha256": "5c2266ed7ed8c728aae0c45c95020c3a0508b4b651af446a52f653bf54759881",
+  "ccf_catalog_checked_at": "2026-09-21",
+  "qualification": "CCF labels are venue tiers inferred conservatively from arXiv journal references; they do not certify an individual paper's full/regular status or quality."
+}

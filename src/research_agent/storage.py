@@ -114,26 +114,78 @@ class Repository:
                                 "AND x.chunk_id=ANY(%s)", (paper_id, chunk_ids)).fetchall()
         return {r["chunk_id"]: r["paragraph_payload"] for r in rows}
 
-    def list_papers(self, q: str = "", limit: int = 20, offset: int = 0) -> dict:
+    def upsert_paper_metadata(self, rows: list[dict]) -> None:
+        """Refresh browsing fields without changing the published retrieval corpus."""
+        with self.connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.executemany(
+                    "INSERT INTO paper_metadata(paper_id,arxiv_submitted_at,arxiv_journal_ref,arxiv_doi,"
+                    "ccf_venue,ccf_level,ccf_catalog_url,metadata_source,metadata_checked_at) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(paper_id) DO UPDATE SET "
+                    "arxiv_submitted_at=EXCLUDED.arxiv_submitted_at,"
+                    "arxiv_journal_ref=EXCLUDED.arxiv_journal_ref,arxiv_doi=EXCLUDED.arxiv_doi,"
+                    "ccf_venue=EXCLUDED.ccf_venue,ccf_level=EXCLUDED.ccf_level,"
+                    "ccf_catalog_url=EXCLUDED.ccf_catalog_url,metadata_source=EXCLUDED.metadata_source,"
+                    "metadata_checked_at=EXCLUDED.metadata_checked_at",
+                    [
+                        (r["paper_id"], r["arxiv_submitted_at"], r["journal_ref"], r["doi"],
+                         r.get("ccf_venue"), r.get("ccf_level"), r.get("ccf_catalog_url"),
+                         r["metadata_source"], r["metadata_checked_at"])
+                        for r in rows
+                    ],
+                )
+
+    def list_papers(self, q: str = "", limit: int = 20, offset: int = 0, sort: str = "id_asc") -> dict:
         _page_bounds(limit, offset)
+        orders = {
+            "id_asc": "p.paper_id ASC",
+            "id_desc": "p.paper_id DESC",
+            "title_asc": "lower(v.title) ASC, p.paper_id ASC",
+            "title_desc": "lower(v.title) DESC, p.paper_id ASC",
+            "submitted_newest": "m.arxiv_submitted_at DESC NULLS LAST, p.paper_id ASC",
+            "submitted_oldest": "m.arxiv_submitted_at ASC NULLS LAST, p.paper_id ASC",
+            "ccf_best": "CASE m.ccf_level WHEN 'A' THEN 0 WHEN 'B' THEN 1 "
+                        "WHEN 'C' THEN 2 ELSE 3 END ASC, m.arxiv_submitted_at DESC NULLS LAST, p.paper_id ASC",
+        }
+        if sort not in orders:
+            raise ValueError("Unsupported paper sort")
         # strpos makes %, _ and backslash literal search text rather than SQL wildcards.
         clause = "p.in_current_corpus AND v.state='active' AND strpos(lower(v.title),lower(%s))>0"
         with self.connect() as conn:
             conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             total = conn.execute("SELECT count(*) AS n FROM papers p JOIN paper_versions v "
                                  "ON v.version_id=p.current_version_id WHERE " + clause, (q,)).fetchone()["n"]
-            rows = conn.execute("SELECT v.paper_payload FROM papers p JOIN paper_versions v "
-                                "ON v.version_id=p.current_version_id WHERE " + clause +
-                                " ORDER BY p.paper_id LIMIT %s OFFSET %s", (q, limit, offset))
-            items = [r["paper_payload"] for r in rows]
+            rows = conn.execute(
+                "SELECT v.paper_payload,m.arxiv_submitted_at,m.arxiv_journal_ref,m.ccf_venue,"
+                "m.ccf_level,m.ccf_catalog_url FROM papers p JOIN paper_versions v "
+                "ON v.version_id=p.current_version_id LEFT JOIN paper_metadata m ON m.paper_id=p.paper_id "
+                "WHERE " + clause + " ORDER BY " + orders[sort] + " LIMIT %s OFFSET %s",
+                (q, limit, offset),
+            )
+            items = [{**r["paper_payload"],
+                      "arxiv_submitted_at": r["arxiv_submitted_at"].isoformat() if r["arxiv_submitted_at"] else None,
+                      "journal_ref": r["arxiv_journal_ref"] or None,
+                      "ccf_venue": r["ccf_venue"], "ccf_level": r["ccf_level"],
+                      "ccf_catalog_url": r["ccf_catalog_url"]} for r in rows]
         return {"items": items, "total": total, "limit": limit, "offset": offset}
 
     def get_paper(self, paper_id: str) -> dict | None:
         with self.connect() as conn:
-            row = conn.execute("SELECT v.paper_payload FROM papers p JOIN paper_versions v "
-                               "ON v.version_id=p.current_version_id WHERE p.paper_id=%s "
-                               "AND p.in_current_corpus AND v.state='active'", (paper_id,)).fetchone()
-        return row["paper_payload"] if row else None
+            row = conn.execute(
+                "SELECT v.paper_payload,m.arxiv_submitted_at,m.arxiv_journal_ref,m.ccf_venue,"
+                "m.ccf_level,m.ccf_catalog_url FROM papers p JOIN paper_versions v "
+                "ON v.version_id=p.current_version_id LEFT JOIN paper_metadata m ON m.paper_id=p.paper_id "
+                "WHERE p.paper_id=%s AND p.in_current_corpus AND v.state='active'",
+                (paper_id,),
+            ).fetchone()
+        if not row:
+            return None
+        return {**row["paper_payload"],
+                "arxiv_submitted_at": row["arxiv_submitted_at"].isoformat()
+                if row["arxiv_submitted_at"] else None,
+                "journal_ref": row["arxiv_journal_ref"] or None,
+                "ccf_venue": row["ccf_venue"], "ccf_level": row["ccf_level"],
+                "ccf_catalog_url": row["ccf_catalog_url"]}
 
     def get_paragraphs(self, paper_id: str, limit: int = 20, offset: int = 0) -> dict:
         _page_bounds(limit, offset)
@@ -154,9 +206,14 @@ class Repository:
             row = conn.execute("SELECT revision,manifest_sha256,paper_count,paragraph_count,published_at "
                                "FROM corpus_state WHERE singleton").fetchone()
             objects = conn.execute("SELECT state,count(*) AS count FROM stored_objects GROUP BY state").fetchall()
+            metadata = conn.execute(
+                "SELECT count(*) FILTER (WHERE arxiv_submitted_at IS NOT NULL) AS submitted_dates,"
+                "count(*) FILTER (WHERE ccf_level IS NOT NULL) AS ccf_venues FROM paper_metadata"
+            ).fetchone()
         states = {r["state"]: r["count"] for r in objects}
         return {**serializable(row), "papers": row["paper_count"], "paragraphs": row["paragraph_count"],
-                "objects": states.get("published", 0), "object_states": states}
+                "objects": states.get("published", 0), "object_states": states,
+                "metadata_dates": metadata["submitted_dates"], "metadata_ccf": metadata["ccf_venues"]}
 
     def list_jobs(self, limit: int = 20) -> list[dict]:
         _page_bounds(limit, 0)

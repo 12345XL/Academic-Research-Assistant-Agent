@@ -1,0 +1,82 @@
+"""Load frozen arXiv metadata and conservative CCF venue labels into PostgreSQL."""
+from __future__ import annotations
+
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from research_agent.paper_metadata import CATALOG_CHECKED_AT, ccf_venue_from_journal_ref
+from research_agent.settings import Settings
+from research_agent.storage import Repository
+
+
+def build_rows(snapshot: dict, paper_ids: set[str]) -> list[dict]:
+    if snapshot.get("source") != "https://export.arxiv.org/api/query":
+        raise ValueError("Unexpected metadata source")
+    entries = snapshot.get("papers")
+    if not isinstance(entries, dict) or set(entries) != paper_ids or snapshot.get("missing_ids"):
+        raise ValueError("Metadata snapshot does not cover the current paper corpus")
+    rows = []
+    for paper_id in sorted(paper_ids):
+        item = entries[paper_id]
+        if not isinstance(item, dict) or item.get("paper_id") != paper_id:
+            raise ValueError("Invalid metadata paper identity")
+        published = item.get("arxiv_submitted_at")
+        if not isinstance(published, str):
+            raise ValueError("Missing arXiv first-submission date")
+        date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+        if date.tzinfo is None:
+            raise ValueError("arXiv first-submission date must include a timezone")
+        journal_ref, doi = item.get("journal_ref"), item.get("doi")
+        if not isinstance(journal_ref, str) or not isinstance(doi, str):
+            raise ValueError("Malformed arXiv journal reference or DOI")
+        venue = ccf_venue_from_journal_ref(journal_ref) or {}
+        if venue:
+            venue = {"ccf_venue": venue["venue"], "ccf_level": venue["ccf_level"],
+                     "ccf_catalog_url": venue["ccf_catalog_url"]}
+        rows.append({
+            "paper_id": paper_id, "arxiv_submitted_at": date, "journal_ref": journal_ref,
+            "doi": doi, **venue, "metadata_source": snapshot["source"],
+            "metadata_checked_at": datetime.fromisoformat(snapshot["retrieved_at"]),
+        })
+    return rows
+
+
+def main() -> None:
+    load_dotenv(ROOT / ".env")
+    repo = Repository(Settings.from_env())
+    repo.migrate()
+    with repo.connect() as conn:
+        paper_ids = {r["paper_id"] for r in conn.execute("SELECT paper_id FROM papers WHERE in_current_corpus")}
+    snapshot_path = ROOT / "metadata/qasper_arxiv.json"
+    snapshot_bytes = snapshot_path.read_bytes()
+    snapshot = json.loads(snapshot_bytes)
+    rows = build_rows(snapshot, paper_ids)
+    repo.upsert_paper_metadata(rows)
+    summary = repo.summary()
+    levels = Counter(r.get("ccf_level") or "unclassified" for r in rows)
+    report = {
+        "checked_at": datetime.now(timezone.utc).isoformat(), "paper_count": len(rows),
+        "arxiv_submitted_dates": summary["metadata_dates"], "ccf_venues": summary["metadata_ccf"],
+        "ccf_level_counts": {level: levels[level] for level in ("A", "B", "C", "unclassified")},
+        "date_source": snapshot["source"], "date_snapshot_at": snapshot["retrieved_at"],
+        "date_snapshot_sha256": hashlib.sha256(snapshot_bytes).hexdigest(),
+        "ccf_catalog_checked_at": CATALOG_CHECKED_AT,
+        "qualification": "CCF labels are venue tiers inferred conservatively from arXiv journal references; "
+                         "they do not certify an individual paper's full/regular status or quality.",
+    }
+    target = ROOT / "reports/paper_sort_metadata.json"
+    target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

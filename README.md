@@ -1,6 +1,6 @@
 # 科研论文助手 Agent
 
-面向 AI 论文阅读的可信 RAG 与受控反馈改进系统，使用 QASPER 正文建立可核对的证据链。按阶段实现，当前交付 **P2A：持久化论文检索工作台**。它能选择论文、检索正文段落、查看相邻上下文、下载经过哈希校验的结构化正文，并显示真实导入与存储状态。当前只返回 BM25 原文证据，**尚未生成答案或完成答案核验**。
+面向 AI 论文阅读的可信 RAG 与受控反馈改进系统，使用 QASPER 正文建立可核对的证据链。按阶段实现，当前交付 **P2A：持久化论文检索工作台**。它能选择并按编号、标题、arXiv 首次提交时间或 CCF 发表载体等级排序论文，检索正文段落、查看相邻上下文、下载经过哈希校验的结构化正文，并显示真实导入与存储状态。当前只返回 BM25 原文证据，**尚未生成答案或完成答案核验**。
 
 ## 先看什么
 
@@ -22,9 +22,10 @@ npm --prefix frontend ci
 .venv/bin/python scripts/prepare_qasper.py
 .venv/bin/python scripts/local_services.py up
 .venv/bin/python scripts/ingest_qasper.py --migrate
+.venv/bin/python scripts/ingest_paper_metadata.py
 ```
 
-`local_services.py up` 首次运行会创建被 Git 忽略的 `.env`，生成本机随机密码，并将数据库和对象文件保存在 `.local/`。准备脚本下载并校验官方 train/dev 数据；首次运行需要网络。不要提交 `.env`、`.local/` 或语料全文。
+`local_services.py up` 首次运行会创建被 Git 忽略的 `.env`，生成本机随机密码，并将数据库和对象文件保存在 `.local/`。准备脚本下载并校验官方 train/dev 数据；首次运行需要网络。`ingest_paper_metadata.py` 把仓库中冻结的 arXiv 元数据快照和保守的 CCF 发表载体匹配结果写入独立表，不改变 RAG 正文。不要提交 `.env`、`.local/` 或语料全文。
 
 在两个终端分别启动：
 
@@ -54,6 +55,8 @@ npm --prefix frontend run build
 | train + dev 论文 | 1,169 |
 | 可检索正文段落（含摘要） | 61,317 |
 | 结构化论文正文对象 | 1,169 |
+| arXiv 首次提交时间 | 1,169 / 1,169 |
+| 可保守映射的 CCF 发表载体 | 33（A 12、B 20、C 1） |
 | 与 P1 冻结检索排名比较 | 745 题，0 处差异 |
 | P1 基线 Hit@5 / 证据 Recall@5 / MRR@5 | 58.52% / 50.64% / 0.3330 |
 
@@ -68,11 +71,14 @@ src/research_agent/
   service.py                 BM25 候选、数据库事实回查与版本刷新
   storage.py                 PostgreSQL 与 S3 适配器
   ingestion.py               白名单数据校验、对象写入与版本发布
-  migrations/001_corpus.sql  数据库结构
+  paper_metadata.py          CCF 发表载体保守匹配规则
+  migrations/                正文与浏览元数据数据库结构
   dataset.py / retrieval.py  QASPER 准备与 P1 BM25 基线
 scripts/                     本地服务、导入、API 与回归入口
 tests/                       单元和真实存储集成测试
 ```
+
+排序由 PostgreSQL 在分页前执行。时间字段取自 arXiv API 的首次提交时间，不是期刊出版时间；CCF 标签来自 arXiv `journal_ref` 与 CCF 官方目录的保守匹配，只表示发表载体目录级别。未分级可能是缺少或不明确的正式发表信息，不表示论文质量低。来源、刷新方式和限制见[数据契约](docs/DATASET.md)。
 
 当前是本机单实例研发环境；没有个人 PDF 上传、模型答案、向量或混合检索、跨论文问答、用户权限、分层记忆、反馈自动部署。它们在后续阶段逐项实现并验收。QASPER 结构化正文可定位到章节和段落，不代表已定位到 PDF 页码。
 

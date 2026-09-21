@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "academic-research-assistant"
-version = "0.2.0"
+version = "0.2.1"
 description = "Evidence-first research assistant: QASPER retrieval baseline and staged Agent engineering"
 requires-python = ">=3.11"
 dependencies = [

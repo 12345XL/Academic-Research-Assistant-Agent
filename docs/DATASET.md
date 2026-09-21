@@ -54,6 +54,18 @@ a28fdf966db827bcee3d873107d6b6669864fb7ca8fbf73a192f5e39191bdb5a
 
 这些位置是 QASPER 结构化数据中的位置，**不是 PDF 页码**。当前阶段不能生成虚假的页码引用。
 
+### 2.1 浏览与排序元数据
+
+QASPER 原始论文记录没有发布日期、会议或 CCF 等级。为支持论文库排序，项目把补充信息保存在独立的 `paper_metadata` 表；它不进入 BM25 语料、向量或离线标准答案。仓库冻结了 2026-09-21 从 [arXiv API](https://info.arxiv.org/help/api/user-manual.html) 获取的 1,169 篇论文元数据快照 `metadata/qasper_arxiv.json`，并记录来源和获取时间。
+
+- `arxiv_submitted_at` 是 arXiv `<published>`，含义是第一版提交时间，不是会议或期刊正式出版时间。
+- `arxiv_journal_ref` 和 DOI 原样保存为来源字段。CCF 匹配只读取 `journal_ref`，不根据标题、作者或模型猜测发表场所。
+- CCF 级别来自 CCF 官方的[人工智能](https://www.ccf.org.cn/Academic_Evaluation/AI/)、[数据库/数据挖掘/内容检索](https://www.ccf.org.cn/Academic_Evaluation/DM_CS/)和[交叉/综合/新兴](https://www.ccf.org.cn/Academic_Evaluation/Cross_Compre_Emerging/)目录，目录核对日期为 2026-09-21。
+- CCF 对会议通常只认可 full/regular paper。单个 arXiv `journal_ref` 未必能证明投稿类型，因此程序排除 workshop、findings、short paper、demo、poster 等明显非正式场次；剩余标签也只表示**发表载体的目录级别**，不作为论文质量评分，也不宣称已证明 full/regular 身份。
+- 无来源、来源歧义或未在已实现目录规则中命中的论文显示“未分级”。未分级不等于 CCF C 或论文质量低。
+
+排序在 PostgreSQL 查询中先作用于全量结果，再做分页。可选值是论文编号升/降序、标题升/降序、arXiv 首次提交时间新/旧顺序，以及 CCF A → B → C → 未分级；同级再按时间和编号稳定排序。刷新快照需要显式运行 `scripts/prepare_arxiv_metadata.py`，脚本遵守 arXiv API 的批量与间隔要求；随后运行 `scripts/ingest_paper_metadata.py`。完整快照覆盖、快照 SHA-256 和等级统计由 `reports/paper_sort_metadata.json` 审计。
+
 ## 3. 标注与证据契约
 
 问题字段：`question_id, paper_id, question, split, annotations`。每条标注独立保留以下原始字段和值：

@@ -5,6 +5,11 @@ export interface Paper {
   split: string;
   source: string;
   version: string;
+  arxiv_submitted_at?: string | null;
+  journal_ref?: string | null;
+  ccf_venue?: string | null;
+  ccf_level?: 'A' | 'B' | 'C' | null;
+  ccf_catalog_url?: string | null;
 }
 
 export interface Paragraph {

@@ -85,6 +85,17 @@ def test_real_import_idempotence_object_repair_and_api(infrastructure, tmp_path)
         assert client.get("/ready").status_code == 200
         assert client.get("/api/v1/papers").json()["total"] == 1
         assert client.get("/api/v1/papers?q=%").json()["total"] == 0
+        repo.upsert_paper_metadata([{
+            "paper_id": "p1", "arxiv_submitted_at": "2020-01-02T00:00:00+00:00",
+            "journal_ref": "EMNLP 2020", "doi": "", "ccf_venue": "EMNLP",
+            "ccf_level": "B", "ccf_catalog_url": "https://www.ccf.org.cn/Academic_Evaluation/AI/",
+            "metadata_source": "test", "metadata_checked_at": "2020-01-03T00:00:00+00:00",
+        }])
+        listed = client.get("/api/v1/papers?sort=ccf_best").json()["items"][0]
+        assert listed["arxiv_submitted_at"].startswith("2020-01-02")
+        assert (listed["ccf_venue"], listed["ccf_level"]) == ("EMNLP", "B")
+        detail = client.get("/api/v1/papers/p1").json()
+        assert (detail["ccf_venue"], detail["ccf_level"]) == ("EMNLP", "B")
         assert client.get("/api/v1/papers/p1/paragraphs").json()["total"] == 1
         answer = client.post("/api/v1/retrieve", json={"paper_id": "p1", "query": "alpha"})
         assert answer.status_code == 200

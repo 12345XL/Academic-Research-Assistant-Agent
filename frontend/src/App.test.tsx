@@ -72,6 +72,16 @@ describe('research session state', () => {
     await waitFor(() => expect((screen.getByRole('button', { name: '检索证据' }) as HTMLButtonElement).disabled).toBe(false));
   });
 
+  it('requests server-side sorting and resets to the first sorted paper', async () => {
+    const fetch = setupFetch();
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    fireEvent.change(screen.getByLabelText('论文排序方式'), { target: { value: 'title_desc' } });
+    await waitFor(() => expect(fetch.mock.calls.some(call =>
+      String(call[0]).includes('sort=title_desc'))).toBe(true));
+    expect(screen.getByLabelText('论文排序方式')).toHaveProperty('value', 'title_desc');
+  });
+
   it('keeps the source context open under StrictMode effect cleanup', async () => {
     const originalShowModal = HTMLDialogElement.prototype.showModal;
     const originalClose = HTMLDialogElement.prototype.close;
