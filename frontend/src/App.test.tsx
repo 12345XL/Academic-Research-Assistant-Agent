@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 const papers = [
-  { paper_id: 'p1', title: 'First paper title', abstract: 'First abstract', source: 'qasper', split: 'train', version: 'v1' },
-  { paper_id: 'p2', title: 'Second paper title', abstract: 'Second abstract', source: 'qasper', split: 'train', version: 'v1' },
+  { paper_id: 'p1', title: 'First paper title', abstract: 'First abstract', source: 'qasper', split: 'train', version: 'v1', arxiv_primary_category: 'cs.CL', research_direction: 'nlp', research_direction_label: '自然语言处理', arxiv_pdf_url: 'https://arxiv.org/pdf/2001.00001v1' },
+  { paper_id: 'p2', title: 'Second paper title', abstract: 'Second abstract', source: 'qasper', split: 'train', version: 'v1', arxiv_primary_category: 'cs.IR', research_direction: 'information_retrieval', research_direction_label: '信息检索', arxiv_pdf_url: 'https://arxiv.org/pdf/2001.00002v1' },
 ];
 const system = { stage: 'P2A', mode: 'postgres', database: { status: 'ready' }, object_store: { status: 'ready', provider: 'S3-compatible', bucket: 'papers' }, corpus: { papers: 2, paragraphs: 20, objects: 2 }, capabilities: { generation: false, pdf_upload: false } };
 const evidence = { trace_id: 'trace1', query: 'method', paper_id: 'p1', top_k: 5, status: 'evidence_found', citations: [{ chunk_id: 'chunk1', paper_id: 'p1', title: papers[0].title, section_name: 'Methods', section_index: 0, paragraph_index: 0, text: 'This result belongs to the first paper.', source: 'qasper', version: 'v1', rank: 1, score: 2 }], notice: '仅返回原文。', trace: { latency_ms: 1 } };
@@ -80,6 +80,19 @@ describe('research session state', () => {
     await waitFor(() => expect(fetch.mock.calls.some(call =>
       String(call[0]).includes('sort=title_desc'))).toBe(true));
     expect(screen.getByLabelText('论文排序方式')).toHaveProperty('value', 'title_desc');
+  });
+
+  it('filters by direction before applying the selected sort and exposes the original PDF', async () => {
+    const fetch = setupFetch();
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    expect(screen.getByRole('link', { name: '打开/下载原论文 PDF' })).toHaveProperty('href', papers[0].arxiv_pdf_url);
+    fireEvent.change(screen.getByLabelText('论文研究方向'), { target: { value: 'nlp' } });
+    fireEvent.change(screen.getByLabelText('论文排序方式'), { target: { value: 'submitted_newest' } });
+    await waitFor(() => expect(fetch.mock.calls.some(call => {
+      const url = String(call[0]);
+      return url.includes('direction=nlp') && url.includes('sort=submitted_newest');
+    })).toBe(true));
   });
 
   it('keeps the source context open under StrictMode effect cleanup', async () => {

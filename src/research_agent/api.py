@@ -15,6 +15,12 @@ from pydantic import BaseModel, Field, field_validator
 from . import __version__
 from .service import CorpusChangedError, CorpusIntegrityError, EvidenceService, PersistentEvidenceService
 
+PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
+                    "submitted_newest", "submitted_oldest", "ccf_best"]
+ResearchDirection = Literal["all", "nlp", "machine_learning", "information_retrieval",
+                            "artificial_intelligence", "speech_audio", "computer_vision_multimedia",
+                            "social_computing", "human_computer_interaction", "robotics", "other"]
+
 
 class RetrievalRequest(BaseModel):
     paper_id: str = Field(min_length=1, max_length=150)
@@ -133,13 +139,14 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
     @app.get("/api/v1/papers")
     def papers(q: str = Query(default="", max_length=200), limit: int = Query(20, ge=1, le=100),
                offset: int = Query(0, ge=0),
-               sort: Literal["id_asc", "id_desc", "title_asc", "title_desc",
-                             "submitted_newest", "submitted_oldest", "ccf_best"] = "id_asc"):
+               sort: PaperSort = "id_asc", direction: ResearchDirection = "all"):
         if persistent:
-            return repository.list_papers(q=q, limit=limit, offset=offset, sort=sort)
+            return repository.list_papers(q=q, limit=limit, offset=offset, sort=sort, direction=direction)
         items = list(service().papers.values())
         if q:
             items = [p for p in items if q.lower() in p["title"].lower()]
+        if direction != "all":
+            items = [p for p in items if p.get("research_direction") == direction]
         if sort == "id_desc":
             items.sort(key=lambda p: p["paper_id"], reverse=True)
         elif sort in ("title_asc", "title_desc"):

@@ -13,6 +13,31 @@ CCF_DM_URL = "https://www.ccf.org.cn/Academic_Evaluation/DM_CS/"
 CCF_CROSS_URL = "https://www.ccf.org.cn/Academic_Evaluation/Cross_Compre_Emerging/"
 CATALOG_CHECKED_AT = "2026-09-21"
 
+RESEARCH_DIRECTIONS = {
+    "nlp": "自然语言处理",
+    "machine_learning": "机器学习",
+    "information_retrieval": "信息检索",
+    "artificial_intelligence": "人工智能",
+    "speech_audio": "语音与音频",
+    "computer_vision_multimedia": "视觉与多媒体",
+    "social_computing": "社会计算",
+    "human_computer_interaction": "人机交互",
+    "robotics": "机器人",
+    "other": "其他方向",
+}
+
+ARXIV_CATEGORY_DIRECTIONS = {
+    "cs.CL": "nlp",
+    "cs.LG": "machine_learning", "stat.ML": "machine_learning", "cs.NE": "machine_learning",
+    "cs.IR": "information_retrieval", "cs.DL": "information_retrieval",
+    "cs.AI": "artificial_intelligence",
+    "eess.AS": "speech_audio", "cs.SD": "speech_audio",
+    "cs.CV": "computer_vision_multimedia", "cs.MM": "computer_vision_multimedia",
+    "cs.SI": "social_computing", "cs.CY": "social_computing", "physics.soc-ph": "social_computing",
+    "cs.HC": "human_computer_interaction",
+    "cs.RO": "robotics",
+}
+
 # A reference containing these words may refer to a satellite or non-regular
 # contribution. Do not transfer the parent conference's tier to it.
 EXCLUDED_CONFERENCE = re.compile(
@@ -68,3 +93,9 @@ def ccf_venue_from_journal_ref(reference: str) -> dict[str, str] | None:
     # Co-located/multi-venue references can be assigned only when all matches
     # share one catalog tier; the displayed venue remains the first match.
     return matches[0] if matches and len({item["ccf_level"] for item in matches}) == 1 else None
+
+
+def research_direction_from_primary_category(primary_category: str) -> dict[str, str]:
+    """Group one official arXiv primary category into a stable UI direction."""
+    key = ARXIV_CATEGORY_DIRECTIONS.get(primary_category, "other")
+    return {"research_direction": key, "research_direction_label": RESEARCH_DIRECTIONS[key]}

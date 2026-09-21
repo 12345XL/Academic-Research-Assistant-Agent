@@ -89,11 +89,15 @@ def test_real_import_idempotence_object_repair_and_api(infrastructure, tmp_path)
             "paper_id": "p1", "arxiv_submitted_at": "2020-01-02T00:00:00+00:00",
             "journal_ref": "EMNLP 2020", "doi": "", "ccf_venue": "EMNLP",
             "ccf_level": "B", "ccf_catalog_url": "https://www.ccf.org.cn/Academic_Evaluation/AI/",
+            "primary_category": "cs.CL", "categories": ["cs.CL", "cs.LG"],
+            "pdf_url": "https://arxiv.org/pdf/2001.00001v1", "research_direction": "nlp",
             "metadata_source": "test", "metadata_checked_at": "2020-01-03T00:00:00+00:00",
         }])
-        listed = client.get("/api/v1/papers?sort=ccf_best").json()["items"][0]
+        listed = client.get("/api/v1/papers?direction=nlp&sort=ccf_best").json()["items"][0]
         assert listed["arxiv_submitted_at"].startswith("2020-01-02")
         assert (listed["ccf_venue"], listed["ccf_level"]) == ("EMNLP", "B")
+        assert listed["research_direction_label"] == "自然语言处理"
+        assert listed["arxiv_pdf_url"].startswith("https://arxiv.org/pdf/")
         detail = client.get("/api/v1/papers/p1").json()
         assert (detail["ccf_venue"], detail["ccf_level"]) == ("EMNLP", "B")
         assert client.get("/api/v1/papers/p1/paragraphs").json()["total"] == 1

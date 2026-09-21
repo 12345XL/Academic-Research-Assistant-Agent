@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from research_agent.paper_metadata import ccf_venue_from_journal_ref
+from research_agent.paper_metadata import ccf_venue_from_journal_ref, research_direction_from_primary_category
 from scripts.ingest_paper_metadata import build_rows
 
 
@@ -34,7 +34,8 @@ def test_ccf_catalog_does_not_promote_unverified_or_satellite_venues(reference):
 def test_metadata_snapshot_must_exactly_cover_current_corpus():
     item = {
         "paper_id": "1503.00841", "arxiv_submitted_at": "2015-03-03T06:59:28Z",
-        "journal_ref": "", "doi": "",
+        "journal_ref": "", "doi": "", "primary_category": "cs.CL",
+        "categories": ["cs.CL", "cs.LG"], "pdf_url": "https://arxiv.org/pdf/1503.00841v1",
     }
     snapshot = {
         "source": "https://export.arxiv.org/api/query",
@@ -43,6 +44,18 @@ def test_metadata_snapshot_must_exactly_cover_current_corpus():
     }
     rows = build_rows(snapshot, {"1503.00841"})
     assert rows[0]["arxiv_submitted_at"].year == 2015
+    assert rows[0]["research_direction"] == "nlp"
     assert rows[0].get("ccf_level") is None
     with pytest.raises(ValueError, match="does not cover"):
         build_rows(snapshot, {"1503.00841", "1601.00901"})
+
+
+@pytest.mark.parametrize(("category", "direction"), [
+    ("cs.CL", "nlp"), ("cs.LG", "machine_learning"), ("cs.IR", "information_retrieval"),
+    ("eess.AS", "speech_audio"), ("cs.CV", "computer_vision_multimedia"),
+    ("q-fin.ST", "other"),
+])
+def test_research_direction_uses_official_primary_category(category, direction):
+    result = research_direction_from_primary_category(category)
+    assert result["research_direction"] == direction
+    assert result["research_direction_label"]

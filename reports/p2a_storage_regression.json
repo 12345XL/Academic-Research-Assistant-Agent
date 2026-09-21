@@ -1,17 +1,20 @@
 {
   "stage": "P2A",
-  "verified_at": "2026-09-21T08:45:39.606378+00:00",
+  "verified_at": "2026-09-21T09:13:31.372287+00:00",
   "postgres_version": "18.6 (Homebrew)",
   "migrations": [
     "001_corpus.sql",
-    "002_paper_metadata.sql"
+    "002_paper_metadata.sql",
+    "003_paper_directions.sql"
   ],
   "corpus_revision": 1,
   "manifest_sha256": "348eb7220c4fab24ea07211b7c26051cfb0301d6239b096f49c777346bd61bde",
   "counts": {
     "papers": 1169,
     "paragraphs": 61317,
-    "paper_objects": 1169
+    "paper_objects": 1169,
+    "categorized_papers": 1169,
+    "machine_learning_papers": 47
   },
   "p1_regression": {
     "compared_questions": 745,
@@ -26,6 +29,8 @@
   "http": {
     "ready": true,
     "retrieval_fact_check": "database",
+    "direction_filter_before_sort": true,
+    "official_pdf_link": true,
     "source_download": true,
     "source_checksum": true
   },

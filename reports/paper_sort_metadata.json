@@ -1,17 +1,33 @@
 {
-  "checked_at": "2026-09-21T08:48:10.635620+00:00",
+  "checked_at": "2026-09-21T09:13:46.528328+00:00",
   "paper_count": 1169,
   "arxiv_submitted_dates": 1169,
   "ccf_venues": 33,
+  "arxiv_primary_categories": 1169,
+  "arxiv_pdf_links": 1169,
   "ccf_level_counts": {
     "A": 12,
     "B": 20,
     "C": 1,
     "unclassified": 1136
   },
+  "research_direction_counts": {
+    "artificial_intelligence": 34,
+    "computer_vision_multimedia": 24,
+    "human_computer_interaction": 4,
+    "information_retrieval": 40,
+    "machine_learning": 47,
+    "nlp": 953,
+    "other": 9,
+    "robotics": 2,
+    "social_computing": 29,
+    "speech_audio": 27
+  },
   "date_source": "https://export.arxiv.org/api/query",
-  "date_snapshot_at": "2026-09-21T08:26:15.933606+00:00",
-  "date_snapshot_sha256": "5c2266ed7ed8c728aae0c45c95020c3a0508b4b651af446a52f653bf54759881",
+  "date_snapshot_at": "2026-09-21T09:04:27.909592+00:00",
+  "date_snapshot_sha256": "8baeb49ccf46eb8b15509def5946b195669024acb735ef32ca421b44d93e8588",
   "ccf_catalog_checked_at": "2026-09-21",
+  "direction_qualification": "Broad browsing directions are deterministic groups of official arXiv primary categories; cross-lists do not create duplicate memberships.",
+  "pdf_qualification": "PDF URLs point to arXiv and are not copied to or checksum-verified by local storage.",
   "qualification": "CCF labels are venue tiers inferred conservatively from arXiv journal references; they do not certify an individual paper's full/regular status or quality."
 }

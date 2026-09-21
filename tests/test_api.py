@@ -27,6 +27,8 @@ def test_real_routes_scope_citations_and_gold_isolation(tmp_path):
         assert client.get("/api/v1/papers?sort=id_desc").json()["items"][0]["paper_id"] == "p2"
         assert client.get("/api/v1/papers?sort=title_desc").json()["items"][0]["title"] == "Beta study"
         assert client.get("/api/v1/papers?sort=unknown").status_code == 422
+        assert client.get("/api/v1/papers?direction=unknown").status_code == 422
+        assert client.get("/api/v1/papers?direction=nlp").json()["total"] == 0
         assert client.get("/api/v1/papers/p1").json()["title"] == "Alpha study"
         result = client.post("/api/v1/retrieve", json={"paper_id": "p1", "query": "alpha"})
         assert result.status_code == 200

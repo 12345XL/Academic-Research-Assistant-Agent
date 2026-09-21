@@ -43,11 +43,33 @@ def get_feed(ids: list[str]) -> dict[str, dict]:
         if not published:
             raise ValueError(f"Missing arXiv first-submission date: {paper_id}")
         datetime.fromisoformat(published.replace("Z", "+00:00"))
+        primary = entry.find(f"{ARXIV}primary_category")
+        primary_category = primary.get("term", "").strip() if primary is not None else ""
+        categories = sorted({
+            category.get("term", "").strip()
+            for category in entry.findall(f"{ATOM}category")
+            if category.get("scheme") == "http://arxiv.org/schemas/atom"
+            and category.get("term", "").strip()
+        })
+        pdf_url = next((
+            link.get("href", "").strip()
+            for link in entry.findall(f"{ATOM}link")
+            if link.get("title") == "pdf" and link.get("type") == "application/pdf"
+        ), "")
+        if not primary_category or primary_category not in categories or not pdf_url:
+            raise ValueError(f"Missing arXiv category or PDF link: {paper_id}")
+        if pdf_url.startswith("http://arxiv.org/"):
+            pdf_url = "https://arxiv.org/" + pdf_url.removeprefix("http://arxiv.org/")
+        if not pdf_url.startswith("https://arxiv.org/pdf/"):
+            raise ValueError(f"Unexpected arXiv PDF URL: {paper_id}")
         output[paper_id] = {
             "paper_id": paper_id,
             "arxiv_submitted_at": published,
             "journal_ref": (entry.findtext(f"{ARXIV}journal_ref") or "").strip(),
             "doi": (entry.findtext(f"{ARXIV}doi") or "").strip(),
+            "primary_category": primary_category,
+            "categories": categories,
+            "pdf_url": pdf_url,
         }
     return output
 
@@ -55,12 +77,13 @@ def get_feed(ids: list[str]) -> dict[str, dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "metadata/qasper_arxiv.json")
+    parser.add_argument("--refresh", action="store_true", help="replace an existing complete snapshot")
     args = parser.parse_args()
     papers = [json.loads(line) for line in (ROOT / "data/processed/papers.jsonl").open(encoding="utf-8")]
     ids = sorted(p["paper_id"] for p in papers)
     if len(set(ids)) != len(ids) or any(not ID.fullmatch(paper_id) for paper_id in ids):
         parser.error("QASPER paper IDs must be unique modern arXiv identifiers")
-    if args.output.exists():
+    if args.output.exists() and not args.refresh:
         existing = json.loads(args.output.read_text(encoding="utf-8"))
         if set(existing["papers"]) == set(ids):
             print(f"Existing arXiv metadata snapshot covers {len(ids)} papers; use a new output path to refresh")

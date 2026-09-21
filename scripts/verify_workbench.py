@@ -37,6 +37,7 @@ def main() -> None:
     manifest, documents = build_documents(papers, paragraphs)
     assert len(papers) == counts["papers"] == 1169
     assert len(paragraphs) == counts["paragraphs"] == 61317
+    assert counts["metadata_dates"] == counts["metadata_categorized"] == 1169
     assert manifest == counts["manifest_sha256"]
     assert store.health()["status"] == "ready"
     frozen = json.loads((ROOT / "reports/p1_retrieval_dev.json").read_text())
@@ -55,6 +56,10 @@ def main() -> None:
     result = fetch("/api/v1/retrieve", {"paper_id": first["paper_id"], "query": "What method and dataset are used?", "top_k": 5})
     assert result["citations"] and result["trace"]["storage"] == "postgres"
     assert all(item["paper_id"] == first["paper_id"] for item in result["citations"])
+    direction_page = fetch("/api/v1/papers?direction=machine_learning&sort=ccf_best&limit=1")
+    assert direction_page["total"] == 47
+    assert direction_page["items"][0]["research_direction"] == "machine_learning"
+    assert direction_page["items"][0]["arxiv_pdf_url"].startswith("https://arxiv.org/pdf/")
     source = fetch(f"/api/v1/papers/{first['paper_id']}/source")
     assert source["paper"] == first and "annotations" not in source and "qas" not in source
     source_metadata = repo.get_paper_object(first["paper_id"])
@@ -66,10 +71,13 @@ def main() -> None:
         "stage": "P2A", "verified_at": datetime.now(timezone.utc).isoformat(),
         "postgres_version": postgres_version, "migrations": migrated,
         "corpus_revision": revision, "manifest_sha256": manifest,
-        "counts": {"papers": len(papers), "paragraphs": len(paragraphs), "paper_objects": len(documents)},
+        "counts": {"papers": len(papers), "paragraphs": len(paragraphs), "paper_objects": len(documents),
+                   "categorized_papers": counts["metadata_categorized"],
+                   "machine_learning_papers": direction_page["total"]},
         "p1_regression": {"compared_questions": len(frozen["cases"]), "ranking_mismatches": mismatches,
                           "metrics_unchanged": frozen["metrics"], "protocol": frozen["protocol"]},
         "http": {"ready": True, "retrieval_fact_check": result["trace"]["fact_check"],
+                 "direction_filter_before_sort": True, "official_pdf_link": True,
                  "source_download": True, "source_checksum": True},
         "boundaries": ["Known-paper BM25 evidence retrieval only; no new answer-quality claim",
                        "Questions read by this offline verifier, never by the online service",

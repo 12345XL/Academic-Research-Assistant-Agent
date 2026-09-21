@@ -6,6 +6,11 @@ export interface Paper {
   source: string;
   version: string;
   arxiv_submitted_at?: string | null;
+  arxiv_primary_category?: string | null;
+  arxiv_categories?: string[];
+  arxiv_pdf_url?: string | null;
+  research_direction?: string | null;
+  research_direction_label?: string | null;
   journal_ref?: string | null;
   ccf_venue?: string | null;
   ccf_level?: 'A' | 'B' | 'C' | null;
