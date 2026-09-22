@@ -81,13 +81,14 @@ class PersistentEvidenceService:
     S3 is used for source downloads, not required to read committed paragraphs.
     """
 
-    def __init__(self, repository, encoder=None, vector_store=None):
+    def __init__(self, repository, encoder=None, vector_store=None, reranker=None):
         self.repository = repository
         self._revision = None
         self._evidence = None
         self._lock = threading.RLock()
         self._encoder = encoder
         self._vector_store = vector_store
+        self._reranker = reranker
 
     def _candidates(self, query, paper_id, top_k, mode, query_vector):
         if paper_id not in self._evidence.papers:
@@ -147,7 +148,8 @@ class PersistentEvidenceService:
             self._evidence = EvidenceService.from_records(papers, paragraphs)
             self._revision = actual_revision
 
-    def retrieve(self, query: str, paper_id: str, top_k: int = 5, mode: str = "bm25", *, query_vector=None) -> dict[str, Any]:
+    def retrieve(self, query: str, paper_id: str, top_k: int = 5, mode: str = "bm25", *,
+                 query_vector=None, rerank: bool = False) -> dict[str, Any]:
         if mode not in {"bm25", "dense", "hybrid"}:
             raise ValueError("Unknown retrieval mode")
         if not 1 <= top_k <= 50 or not query.strip():
@@ -156,7 +158,7 @@ class PersistentEvidenceService:
         with self._lock:
             for _ in range(2):
                 self._ensure_snapshot()
-                result = self._candidates(query, paper_id, top_k, mode, query_vector)
+                result = self._candidates(query, paper_id, max(20, top_k) if rerank else top_k, mode, query_vector)
                 citations = result["citations"]
                 facts = self.repository.get_chunks([item["chunk_id"] for item in citations], paper_id)
                 if any(
@@ -177,6 +179,25 @@ class PersistentEvidenceService:
                     for field in ("title", "text", "text_sha256", "section_name", "section_index",
                                   "paragraph_index", "source", "version"):
                         item[field] = fact[field]
+                result["trace"]["rerank_enabled"] = rerank
+                if rerank:
+                    from .reranking import CONFIG as RERANK_CONFIG, LocalReranker, apply_reranking
+                    self._reranker = self._reranker or LocalReranker()
+                    rerank_started = time.perf_counter()
+                    # Only checked database facts reach the cross-encoder, never cached candidate text or gold.
+                    scores, stats = self._reranker.score(query, [item["text"] for item in citations])
+                    reranked = apply_reranking(citations, scores, top_k)
+                    if self.repository.revision() != self._revision:
+                        self._evidence = None
+                        continue
+                    result.update(citations=reranked, top_k=top_k,
+                                  notice="已对召回候选进行本地模型重排；分数不是概率，尚未生成或验证答案。")
+                    result["trace"].update(
+                        reranker=RERANK_CONFIG, reranker_stats=stats, score_kind="cross_encoder_logit",
+                        rerank_candidates=[item["chunk_id"] for item in citations],
+                        rerank_candidate_count=len(citations), returned=len(reranked),
+                        rerank_latency_ms=round((time.perf_counter() - rerank_started) * 1000, 3),
+                        model_calls=result["trace"]["model_calls"] + (1 if citations else 0))
                 result["trace"].update(storage="postgres", corpus_revision=str(self._revision), fact_check="database")
                 result["trace"]["bm25_latency_ms"] = result["trace"]["latency_ms"]
                 result["trace"]["latency_ms"] = round((time.perf_counter() - started) * 1000, 3)

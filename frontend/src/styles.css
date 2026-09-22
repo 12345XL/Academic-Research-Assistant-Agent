@@ -14,3 +14,5 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 .question-toolbar{flex-wrap:wrap;gap:10px}.question-toolbar>label{white-space:nowrap}.question-submit{margin-left:auto}
+
+.rerank-toggle{display:flex;align-items:center;gap:6px}.rerank-toggle input{accent-color:var(--green)}

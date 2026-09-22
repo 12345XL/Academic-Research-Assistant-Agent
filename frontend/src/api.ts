@@ -40,7 +40,7 @@ export interface Retrieval {
   status: 'evidence_found' | 'no_lexical_match' | 'no_evidence';
   citations: Citation[];
   notice: string;
-  trace: { retriever: string; k1: number; b: number; corpus_paragraphs: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
+  trace: { rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
 }
 
 export interface System {

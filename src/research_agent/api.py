@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 from . import __version__
 from .service import CorpusChangedError, CorpusIntegrityError, EvidenceService, PersistentEvidenceService
 from .embeddings import VectorUnavailableError
+from .reranking import RerankerUnavailableError
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -28,6 +29,7 @@ class RetrievalRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)
     top_k: int = Field(default=5, ge=1, le=50)
     mode: Literal["bm25", "dense", "hybrid"] = "bm25"
+    rerank: bool = Field(default=False, strict=True)
 
     @field_validator("query", "paper_id")
     @classmethod
@@ -78,6 +80,10 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
     async def vector_unavailable(request: Request, exc: VectorUnavailableError):
         return JSONResponse(status_code=503, content={"detail": str(exc)})
 
+    @app.exception_handler(RerankerUnavailableError)
+    async def reranker_unavailable(request: Request, exc: RerankerUnavailableError):
+        return JSONResponse(status_code=503, content={"detail": str(exc)})
+
     if persistent:
         import psycopg
         from botocore.exceptions import BotoCoreError, ClientError
@@ -102,9 +108,9 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
         if persistent:
             try:
                 counts = repository.summary()
-                return {"status": "ready", "stage": "P2B-1", "version": __version__, "papers": counts["papers"]}
+                return {"status": "ready", "stage": "P2B-2", "version": __version__, "papers": counts["papers"]}
             except Exception:
-                return {"status": "database_unavailable", "stage": "P2B-1", "version": __version__, "papers": 0}
+                return {"status": "database_unavailable", "stage": "P2B-2", "version": __version__, "papers": 0}
         evidence = app.state.evidence
         return {"status": "ready" if evidence else "data_missing", "stage": "P1",
                 "version": __version__, "papers": len(evidence.papers) if evidence else 0}
@@ -133,7 +139,7 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
             vector_status = VectorStore(repository).status(repository.revision())
         except Exception:
             vector_status = {"state": "unavailable"}
-        return {"stage": "P2B-1", "mode": "postgres", "database": {"status": database_status},
+        return {"stage": "P2B-2", "mode": "postgres", "database": {"status": database_status},
                 "object_store": {"status": storage_status, "provider": "S3-compatible", "bucket": settings.s3_bucket},
                 "corpus": counts, "vector_index": vector_status,
                 "capabilities": {"generation": False, "pdf_upload": False,
@@ -214,9 +220,9 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
     def retrieve(body: RetrievalRequest):
         try:
             if persistent:
-                return service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode)
-            if body.mode != "bm25":
-                raise HTTPException(409, "向量与混合检索需要 PostgreSQL 模式和已发布索引")
+                return service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode, rerank=body.rerank)
+            if body.mode != "bm25" or body.rerank:
+                raise HTTPException(409, "向量、混合与重排检索需要 PostgreSQL 模式及相应模型/索引")
             return service().retrieve(body.query, body.paper_id, body.top_k)
         except KeyError:
             raise HTTPException(404, "论文不存在") from None

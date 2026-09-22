@@ -26,6 +26,28 @@ function setupFetch(retrieve?: (options: RequestInit) => Promise<Response>) {
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.unstubAllGlobals(); });
 
 describe('research session state', () => {
+  it('sends the optional rerank flag and displays negative logits as rerank scores', async () => {
+    let submitted: Record<string, unknown> = {};
+    setupFetch(options => {
+      submitted = JSON.parse(String(options.body));
+      return Promise.resolve(json({ ...evidence, trace: { latency_ms: 100, retriever: 'hybrid', rerank_enabled: true },
+        citations: [{ ...evidence.citations[0], score: -2.1234 }] }));
+    });
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    expect((screen.getByRole('checkbox', { name: '模型重排' }) as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByRole('checkbox', { name: '模型重排' }));
+    fireEvent.change(screen.getByLabelText('检索方式'), { target: { value: 'hybrid' } });
+    fireEvent.change(screen.getByLabelText('输入检索问题'), { target: { value: 'method' } });
+    fireEvent.click(screen.getByRole('button', { name: '检索证据' }));
+    await screen.findByText(evidence.citations[0].text);
+    expect(submitted.rerank).toBe(true);
+    expect(screen.getByText('-2.12')).toBeTruthy();
+    expect(screen.getByText(/本次检索 · 混合 RRF \+ 模型重排/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('checkbox', { name: '模型重排' }));
+    expect(screen.queryByText(evidence.citations[0].text)).toBeNull();
+  });
+
   it('sends the selected retrieval mode and labels the returned RRF score', async () => {
     let submitted: Record<string, unknown> = {};
     setupFetch(options => {

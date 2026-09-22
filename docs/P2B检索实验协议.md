@@ -26,3 +26,16 @@
 窗口最大值聚合可能偏向长段落；要用后续误差分析检验。RRF 只融合排名，不能证明事实支持；Reranker 和生成/核验属于后续独立增量。取消浏览器请求只会停止前端等待，当前本地同步模型推理可能继续完成。
 
 依据：[BGE 官方模型卡](https://huggingface.co/BAAI/bge-small-en-v1.5)、[pgvector 官方文档](https://github.com/pgvector/pgvector)。
+
+## P2B-2 预先固定的选择（2026-09-22）
+
+- 重排模型：`cross-encoder/ms-marco-MiniLM-L6-v2`，revision `233902d25c440f23af6f7d6e94d2946bac0bee0a`；本地 safetensors，禁止远程代码和请求时隐式下载。六层英文模型作为轻量起点；BGE-reranker-base 等更大或多语言模型留待有需求时另立实验，不引用其他基准成绩代替 QASPER 实测。
+- 预固定六组：BM25、dense、hybrid，以及各自开启同一个 rerank 开关。评测每组前 20 个候选，重排返回 5；界面请求 `top_k > 20` 时候选为 `max(20, top_k)`，最多 50。混合仍为两路各 20、RRF 常数 60 后保留前 20，不能把两路并集全部重排称为相同候选预算。
+- 交叉编码器使用原始问题（无 BGE 检索前缀）与正文窗口成对输入：`[CLS] question [SEP] passage [SEP]`。问题最多 128 token，超过时明确要求缩短；正文窗口预算 `512 - question_tokens - 3`，重叠 64 token，所有尾部窗口保留，每请求最多 256 个窗口，超过预算则明确失败，不截断冒充完整重排。
+- 每段以最高窗口原始 logit 排序，同分按 chunk_id；模型分数可为负数，不是概率，不据此设置拒答阈值。最大值聚合可能偏向长段落，应纳入误差分析。
+- 重排只接收已回查的候选正文，不读答案或人工证据标签。执行后再次确认语料版本，换版时重试整个请求；模型缺失/输出非有限值/返回数量错误时明确失败，不伪装成重排成功。
+- 复用冻结的 745 题与文件哈希；逐题验证三个无重排组与 P2B-1 排名一致。报告 Hit@5、证据 Recall@5、MRR@5、每组候选 Hit@20/Recall@20、新增/丢失命中，以及重排未能将已召回证据排进前五的数量。候选未召回的证据不能被重排凭空找回。
+- 离线批量问题向量仍可复用，但每组重排均实际推理。记录设备、冷启动和重排耗时分布；不把批量编码或单机单次请求写成并发 SLA。官方 test 不使用，读完结果不追加隐式调参。
+- 界面默认不开重排，保留检索方式选择。工程验收覆盖关闭时排名不变、候选范围、重排前回查、执行中换版、负分/异常分数、窗口尾部和预算、缺失模型、前端请求与分数标签。
+
+依据：[MiniLM Cross-Encoder 官方模型卡](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2)、[Sentence Transformers Retrieve & Re-Rank](https://www.sbert.net/examples/applications/retrieve_rerank/README.html)。本实验不微调模型，不代表已解决生成或引用支持关系核验。
