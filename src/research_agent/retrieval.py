@@ -23,15 +23,22 @@ class Hit:
     score: float
 
 
-def reciprocal_rank_fusion(rankings: list[list[str]], top_k: int, constant: int = 60) -> list[tuple[str, float]]:
-    """Equal-weight rank fusion; duplicate IDs never contribute twice per list."""
-    if constant < 1 or top_k < 1:
+def reciprocal_rank_fusion(rankings: list[list[str]], top_k: int, constant: int = 60,
+                           weights: list[float] | None = None) -> list[tuple[str, float]]:
+    """Weighted RRF; defaults exactly preserve historical equal-weight scores."""
+    if type(constant) is not int or type(top_k) is not int or constant < 1 or top_k < 1:
         raise ValueError("RRF constant and top_k must be positive")
+    weights = [1.0] * len(rankings) if weights is None else weights
+    if len(weights) != len(rankings) or not weights or any(
+            type(w) not in (int, float) or not math.isfinite(w) or w < 0 for w in weights) or not any(weights):
+        raise ValueError("RRF weights must be finite, nonnegative and not all zero")
     scores: dict[str, float] = defaultdict(float)
-    for ranking in rankings:
+    for ranking, weight in zip(rankings, weights):
+        if weight == 0:
+            continue
         unique = list(dict.fromkeys(ranking))
         for rank, chunk_id in enumerate(unique, 1):
-            scores[chunk_id] += 1.0 / (constant + rank)
+            scores[chunk_id] += weight / (constant + rank)
     return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:top_k]
 
 

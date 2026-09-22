@@ -1,0 +1,951 @@
+{
+  "label_source": "engineering constructed synthetic pairs, not independent human gold",
+  "cases": [
+    {
+      "id": "number-supported",
+      "pair": "number",
+      "expected_publish": true,
+      "question": "How many documents were annotated?",
+      "claims": [
+        {
+          "text": "120 documents were annotated.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We annotated 120 documents."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We annotated 120 documents."
+        }
+      ]
+    },
+    {
+      "id": "number-corrupted",
+      "pair": "number",
+      "expected_publish": false,
+      "question": "How many documents were annotated?",
+      "claims": [
+        {
+          "text": "1,200 documents were annotated.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We annotated 120 documents."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We annotated 120 documents."
+        }
+      ]
+    },
+    {
+      "id": "percentage-supported",
+      "pair": "percentage",
+      "expected_publish": true,
+      "question": "What was the accuracy?",
+      "claims": [
+        {
+          "text": "Accuracy was 82% on the held-out set.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The system achieved 82% accuracy on the held-out set."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The system achieved 82% accuracy on the held-out set."
+        }
+      ]
+    },
+    {
+      "id": "percentage-corrupted",
+      "pair": "percentage",
+      "expected_publish": false,
+      "question": "What was the accuracy?",
+      "claims": [
+        {
+          "text": "Accuracy was 92% on the held-out set.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The system achieved 82% accuracy on the held-out set."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The system achieved 82% accuracy on the held-out set."
+        }
+      ]
+    },
+    {
+      "id": "negation-supported",
+      "pair": "negation",
+      "expected_publish": true,
+      "question": "Was the encoder frozen?",
+      "claims": [
+        {
+          "text": "No, the encoder was not frozen.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The encoder was not frozen during training."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The encoder was not frozen during training."
+        }
+      ]
+    },
+    {
+      "id": "negation-corrupted",
+      "pair": "negation",
+      "expected_publish": false,
+      "question": "Was the encoder frozen?",
+      "claims": [
+        {
+          "text": "Yes, the encoder was frozen.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The encoder was not frozen during training."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The encoder was not frozen during training."
+        }
+      ]
+    },
+    {
+      "id": "condition-supported",
+      "pair": "condition",
+      "expected_publish": true,
+      "question": "When did accuracy improve?",
+      "claims": [
+        {
+          "text": "Accuracy improved when labeled data exceeded 500 examples.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Accuracy improved only when labeled data exceeded 500 examples."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Accuracy improved only when labeled data exceeded 500 examples."
+        }
+      ]
+    },
+    {
+      "id": "condition-corrupted",
+      "pair": "condition",
+      "expected_publish": false,
+      "question": "When did accuracy improve?",
+      "claims": [
+        {
+          "text": "Accuracy improved when labeled data was below 500 examples.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Accuracy improved only when labeled data exceeded 500 examples."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Accuracy improved only when labeled data exceeded 500 examples."
+        }
+      ]
+    },
+    {
+      "id": "universal-supported",
+      "pair": "universal",
+      "expected_publish": true,
+      "question": "Did all datasets improve?",
+      "claims": [
+        {
+          "text": "No, only two of the five datasets improved.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Two of the five datasets improved; the other three did not."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Two of the five datasets improved; the other three did not."
+        }
+      ]
+    },
+    {
+      "id": "universal-corrupted",
+      "pair": "universal",
+      "expected_publish": false,
+      "question": "Did all datasets improve?",
+      "claims": [
+        {
+          "text": "Yes, all five datasets improved.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Two of the five datasets improved; the other three did not."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Two of the five datasets improved; the other three did not."
+        }
+      ]
+    },
+    {
+      "id": "language-supported",
+      "pair": "language",
+      "expected_publish": true,
+      "question": "Is the dataset English-only?",
+      "claims": [
+        {
+          "text": "The reported information does not establish whether the dataset is English-only.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The dataset contains English examples. We do not report whether other languages are present."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The dataset contains English examples. We do not report whether other languages are present."
+        }
+      ]
+    },
+    {
+      "id": "language-corrupted",
+      "pair": "language",
+      "expected_publish": false,
+      "question": "Is the dataset English-only?",
+      "claims": [
+        {
+          "text": "Yes, the dataset is English-only.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The dataset contains English examples. We do not report whether other languages are present."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The dataset contains English examples. We do not report whether other languages are present."
+        }
+      ]
+    },
+    {
+      "id": "planned-supported",
+      "pair": "planned",
+      "expected_publish": true,
+      "question": "Was the multilingual model evaluated?",
+      "claims": [
+        {
+          "text": "No, evaluation of the multilingual model is left to future work.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We evaluated a monolingual model. Evaluation of a multilingual model is left to future work."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We evaluated a monolingual model. Evaluation of a multilingual model is left to future work."
+        }
+      ]
+    },
+    {
+      "id": "planned-corrupted",
+      "pair": "planned",
+      "expected_publish": false,
+      "question": "Was the multilingual model evaluated?",
+      "claims": [
+        {
+          "text": "Yes, the multilingual model was evaluated.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We evaluated a monolingual model. Evaluation of a multilingual model is left to future work."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We evaluated a monolingual model. Evaluation of a multilingual model is left to future work."
+        }
+      ]
+    },
+    {
+      "id": "baseline-supported",
+      "pair": "baseline",
+      "expected_publish": true,
+      "question": "Was Model B evaluated as a baseline?",
+      "claims": [
+        {
+          "text": "No, Model B was discussed but not evaluated.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We discuss Model B as related work but do not evaluate it. Our only evaluated baseline is Model A."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We discuss Model B as related work but do not evaluate it. Our only evaluated baseline is Model A."
+        }
+      ]
+    },
+    {
+      "id": "baseline-corrupted",
+      "pair": "baseline",
+      "expected_publish": false,
+      "question": "Was Model B evaluated as a baseline?",
+      "claims": [
+        {
+          "text": "Yes, Model B was an evaluated baseline.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We discuss Model B as related work but do not evaluate it. Our only evaluated baseline is Model A."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We discuss Model B as related work but do not evaluate it. Our only evaluated baseline is Model A."
+        }
+      ]
+    },
+    {
+      "id": "comparison-supported",
+      "pair": "comparison",
+      "expected_publish": true,
+      "question": "Which model was faster?",
+      "claims": [
+        {
+          "text": "Model A was faster than Model B.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Model A took 10 seconds; Model B took 20 seconds on the same device."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Model A took 10 seconds; Model B took 20 seconds on the same device."
+        }
+      ]
+    },
+    {
+      "id": "comparison-corrupted",
+      "pair": "comparison",
+      "expected_publish": false,
+      "question": "Which model was faster?",
+      "claims": [
+        {
+          "text": "Model B was faster than Model A.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Model A took 10 seconds; Model B took 20 seconds on the same device."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Model A took 10 seconds; Model B took 20 seconds on the same device."
+        }
+      ]
+    },
+    {
+      "id": "units-supported",
+      "pair": "units",
+      "expected_publish": true,
+      "question": "How much memory was used?",
+      "claims": [
+        {
+          "text": "Peak memory usage was 8 GB.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Peak memory usage was 8 GB."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Peak memory usage was 8 GB."
+        }
+      ]
+    },
+    {
+      "id": "units-corrupted",
+      "pair": "units",
+      "expected_publish": false,
+      "question": "How much memory was used?",
+      "claims": [
+        {
+          "text": "Peak memory usage was 8 MB.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Peak memory usage was 8 GB."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Peak memory usage was 8 GB."
+        }
+      ]
+    },
+    {
+      "id": "split-supported",
+      "pair": "split",
+      "expected_publish": true,
+      "question": "What was the test score?",
+      "claims": [
+        {
+          "text": "The test score was 75.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The development score was 90, whereas the test score was 75."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The development score was 90, whereas the test score was 75."
+        }
+      ]
+    },
+    {
+      "id": "split-corrupted",
+      "pair": "split",
+      "expected_publish": false,
+      "question": "What was the test score?",
+      "claims": [
+        {
+          "text": "The test score was 90.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The development score was 90, whereas the test score was 75."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The development score was 90, whereas the test score was 75."
+        }
+      ]
+    },
+    {
+      "id": "causality-supported",
+      "pair": "causality",
+      "expected_publish": true,
+      "question": "Does the study establish causality?",
+      "claims": [
+        {
+          "text": "No, the study reports correlation without establishing causality.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The observational study found a correlation, but does not establish a causal relationship."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The observational study found a correlation, but does not establish a causal relationship."
+        }
+      ]
+    },
+    {
+      "id": "causality-corrupted",
+      "pair": "causality",
+      "expected_publish": false,
+      "question": "Does the study establish causality?",
+      "claims": [
+        {
+          "text": "Yes, the study establishes a causal relationship.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The observational study found a correlation, but does not establish a causal relationship."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The observational study found a correlation, but does not establish a causal relationship."
+        }
+      ]
+    },
+    {
+      "id": "certainty-supported",
+      "pair": "certainty",
+      "expected_publish": true,
+      "question": "Is the improvement statistically significant?",
+      "claims": [
+        {
+          "text": "No, the improvement was not statistically significant.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The improvement was not statistically significant at the specified threshold."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The improvement was not statistically significant at the specified threshold."
+        }
+      ]
+    },
+    {
+      "id": "certainty-corrupted",
+      "pair": "certainty",
+      "expected_publish": false,
+      "question": "Is the improvement statistically significant?",
+      "claims": [
+        {
+          "text": "Yes, the improvement was statistically significant.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The improvement was not statistically significant at the specified threshold."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The improvement was not statistically significant at the specified threshold."
+        }
+      ]
+    },
+    {
+      "id": "scope-supported",
+      "pair": "scope",
+      "expected_publish": true,
+      "question": "Does the guarantee apply to long inputs?",
+      "claims": [
+        {
+          "text": "No, inputs longer than 100 tokens are not covered.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+        }
+      ]
+    },
+    {
+      "id": "scope-corrupted",
+      "pair": "scope",
+      "expected_publish": false,
+      "question": "Does the guarantee apply to long inputs?",
+      "claims": [
+        {
+          "text": "Yes, the guarantee applies to inputs of any length.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+        }
+      ]
+    },
+    {
+      "id": "direction-supported",
+      "pair": "direction",
+      "expected_publish": true,
+      "question": "Did latency rise or fall?",
+      "claims": [
+        {
+          "text": "Latency fell by 10 milliseconds.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Latency fell from 40 milliseconds to 30 milliseconds."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Latency fell from 40 milliseconds to 30 milliseconds."
+        }
+      ]
+    },
+    {
+      "id": "direction-corrupted",
+      "pair": "direction",
+      "expected_publish": false,
+      "question": "Did latency rise or fall?",
+      "claims": [
+        {
+          "text": "Latency rose by 10 milliseconds.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Latency fell from 40 milliseconds to 30 milliseconds."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Latency fell from 40 milliseconds to 30 milliseconds."
+        }
+      ]
+    },
+    {
+      "id": "subset-supported",
+      "pair": "subset",
+      "expected_publish": true,
+      "question": "How many annotated items were used for training?",
+      "claims": [
+        {
+          "text": "80 annotated items were used for training.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We annotated 100 items and used 80 of them for training."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We annotated 100 items and used 80 of them for training."
+        }
+      ]
+    },
+    {
+      "id": "subset-corrupted",
+      "pair": "subset",
+      "expected_publish": false,
+      "question": "How many annotated items were used for training?",
+      "claims": [
+        {
+          "text": "100 annotated items were used for training.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We annotated 100 items and used 80 of them for training."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We annotated 100 items and used 80 of them for training."
+        }
+      ]
+    },
+    {
+      "id": "attribution-supported",
+      "pair": "attribution",
+      "expected_publish": true,
+      "question": "Who proposed the current method?",
+      "claims": [
+        {
+          "text": "Jones proposed the current method.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Smith proposed the baseline. Jones proposed the current method."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Smith proposed the baseline. Jones proposed the current method."
+        }
+      ]
+    },
+    {
+      "id": "attribution-corrupted",
+      "pair": "attribution",
+      "expected_publish": false,
+      "question": "Who proposed the current method?",
+      "claims": [
+        {
+          "text": "Smith proposed the current method.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Smith proposed the baseline. Jones proposed the current method."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Smith proposed the baseline. Jones proposed the current method."
+        }
+      ]
+    },
+    {
+      "id": "coverage-supported",
+      "pair": "coverage",
+      "expected_publish": true,
+      "question": "Were human evaluations performed?",
+      "claims": [
+        {
+          "text": "No, human evaluations were not performed.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We performed automatic evaluations only and did not perform human evaluations."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We performed automatic evaluations only and did not perform human evaluations."
+        }
+      ]
+    },
+    {
+      "id": "coverage-corrupted",
+      "pair": "coverage",
+      "expected_publish": false,
+      "question": "Were human evaluations performed?",
+      "claims": [
+        {
+          "text": "Yes, human evaluations were performed.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "We performed automatic evaluations only and did not perform human evaluations."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "We performed automatic evaluations only and did not perform human evaluations."
+        }
+      ]
+    },
+    {
+      "id": "definition-supported",
+      "pair": "definition",
+      "expected_publish": true,
+      "question": "How is robustness defined?",
+      "claims": [
+        {
+          "text": "Robustness is the fraction of predictions unchanged after perturbation.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Robustness is the fraction of predictions unchanged after perturbation."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Robustness is the fraction of predictions unchanged after perturbation."
+        }
+      ]
+    },
+    {
+      "id": "definition-corrupted",
+      "pair": "definition",
+      "expected_publish": false,
+      "question": "How is robustness defined?",
+      "claims": [
+        {
+          "text": "Robustness is the fraction of predictions changed after perturbation.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "Robustness is the fraction of predictions unchanged after perturbation."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "Robustness is the fraction of predictions unchanged after perturbation."
+        }
+      ]
+    },
+    {
+      "id": "ownership-true",
+      "pair": "ownership",
+      "expected_publish": true,
+      "question": "How many training and test examples were used?",
+      "claims": [
+        {
+          "text": "There were 50 training examples.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "There were 50 training examples."
+            }
+          ]
+        },
+        {
+          "text": "There were 20 test examples.",
+          "evidence": [
+            {
+              "chunk_id": "b",
+              "quote": "There were 20 test examples."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "There were 50 training examples."
+        },
+        {
+          "chunk_id": "b",
+          "text": "There were 20 test examples."
+        }
+      ]
+    },
+    {
+      "id": "ownership-false",
+      "pair": "ownership",
+      "expected_publish": false,
+      "question": "How many training and test examples were used?",
+      "claims": [
+        {
+          "text": "There were 50 training examples.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "There were 50 training examples."
+            }
+          ]
+        },
+        {
+          "text": "There were 20 test examples.",
+          "evidence": [
+            {
+              "chunk_id": "a",
+              "quote": "There were 50 training examples."
+            }
+          ]
+        }
+      ],
+      "cited_paragraphs": [
+        {
+          "chunk_id": "a",
+          "text": "There were 50 training examples."
+        },
+        {
+          "chunk_id": "b",
+          "text": "There were 20 test examples."
+        }
+      ]
+    }
+  ]
+}

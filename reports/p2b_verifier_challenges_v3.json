@@ -1,0 +1,2813 @@
+{
+  "manifest_sha256": "c4e63c026d5cdfd0a737b77862b07b36ac8e3de5e6fd3d5fb1d6459713e29ce8",
+  "prompt_sha256": {
+    "v1": "0393626a393b4403d18b14c71ca83b715afc045095ff87b7adf97f315ee5016d",
+    "v2": "46d2d2d622d3394053ac8132f9dfed6254e735265e4d38bf7dcfa0f1267a44b2"
+  },
+  "label_source": "engineering constructed synthetic pairs, not independent human gold",
+  "cases": [
+    {
+      "id": "number-supported",
+      "pair": "number",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 470,
+          "completion_tokens": 27,
+          "total_tokens": 497,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 214
+        },
+        "latency_ms": 717.241,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "number-supported",
+      "pair": "number",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We annotated 120 documents."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 817,
+          "completion_tokens": 57,
+          "total_tokens": 874,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 305
+        },
+        "latency_ms": 795.193,
+        "output_sha256": "6d59b701d396e753646d582e22b197268b66b0c9cf6231ad4dd5f54fd736d2d6"
+      }
+    },
+    {
+      "id": "number-corrupted",
+      "pair": "number",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 472,
+          "completion_tokens": 27,
+          "total_tokens": 499,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 216
+        },
+        "latency_ms": 902.709,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "number-corrupted",
+      "pair": "number",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We annotated 120 documents."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 819,
+          "completion_tokens": 59,
+          "total_tokens": 878,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 307
+        },
+        "latency_ms": 1050.712,
+        "output_sha256": "a4457e8fd7c3f4a9827695f9b7d0f1ac5cb6fd1e535f96bb546b94ea8231813f"
+      }
+    },
+    {
+      "id": "percentage-supported",
+      "pair": "percentage",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 489,
+          "completion_tokens": 23,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 233
+        },
+        "latency_ms": 1836.899,
+        "output_sha256": "c0edc7e5018322d4ce425d88298c717a85858caeaa733a98de8854055b59f478"
+      }
+    },
+    {
+      "id": "percentage-supported",
+      "pair": "percentage",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The system achieved 82% accuracy on the held-out set."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 836,
+          "completion_tokens": 53,
+          "total_tokens": 889,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 324
+        },
+        "latency_ms": 843.868,
+        "output_sha256": "aec18589f2e08a5dc8c762b6fdb11238ff019e1b6802db499bed8d7b676d9071"
+      }
+    },
+    {
+      "id": "percentage-corrupted",
+      "pair": "percentage",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 489,
+          "completion_tokens": 23,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 233
+        },
+        "latency_ms": 974.865,
+        "output_sha256": "15911b09861b87281e132c1f1882a62fee74327278dfb92a52bf69da51100520"
+      }
+    },
+    {
+      "id": "percentage-corrupted",
+      "pair": "percentage",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The system achieved 82% accuracy on the held-out set."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 836,
+          "completion_tokens": 55,
+          "total_tokens": 891,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 324
+        },
+        "latency_ms": 758.16,
+        "output_sha256": "1f52619cb3ada37f57f38a05ac8b0372c7ff6adffbf144a072a2ba8247ef896d"
+      }
+    },
+    {
+      "id": "negation-supported",
+      "pair": "negation",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 476,
+          "completion_tokens": 27,
+          "total_tokens": 503,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 220
+        },
+        "latency_ms": 847.321,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "negation-supported",
+      "pair": "negation",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The encoder was not frozen during training."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 823,
+          "completion_tokens": 59,
+          "total_tokens": 882,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 311
+        },
+        "latency_ms": 982.714,
+        "output_sha256": "3b387906c32b2c1544e4e69b5a0e80d28400bbec14c09f3f071a2b3651aad77e"
+      }
+    },
+    {
+      "id": "negation-corrupted",
+      "pair": "negation",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 475,
+          "completion_tokens": 27,
+          "total_tokens": 502,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 219
+        },
+        "latency_ms": 589.37,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "negation-corrupted",
+      "pair": "negation",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The encoder was not frozen during training."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 822,
+          "completion_tokens": 61,
+          "total_tokens": 883,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 310
+        },
+        "latency_ms": 563.033,
+        "output_sha256": "e15237dd4c72fc8ba1fe4eb5f4b1fd6d14e1e5c1e1b1af5a1a5048c915c098ea"
+      }
+    },
+    {
+      "id": "condition-supported",
+      "pair": "condition",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 484,
+          "completion_tokens": 27,
+          "total_tokens": 511,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 228
+        },
+        "latency_ms": 799.456,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "condition-supported",
+      "pair": "condition",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Accuracy improved only when labeled data exceeded 500 examples."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 831,
+          "completion_tokens": 51,
+          "total_tokens": 882,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 319
+        },
+        "latency_ms": 873.482,
+        "output_sha256": "cbff4fbfe8e87803c6b4531cd6f03f21c09ef1e115c9d17ccc04060391857ff5"
+      }
+    },
+    {
+      "id": "condition-corrupted",
+      "pair": "condition",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 485,
+          "completion_tokens": 27,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 229
+        },
+        "latency_ms": 629.549,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "condition-corrupted",
+      "pair": "condition",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Accuracy improved only when labeled data exceeded 500 examples."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 832,
+          "completion_tokens": 64,
+          "total_tokens": 896,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 320
+        },
+        "latency_ms": 991.215,
+        "output_sha256": "3fc816a1e784ab26ed25a70640ee9f9e1b16f8c43a9170f882c67f13a8838a5d"
+      }
+    },
+    {
+      "id": "universal-supported",
+      "pair": "universal",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 488,
+          "completion_tokens": 27,
+          "total_tokens": 515,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 232
+        },
+        "latency_ms": 917.375,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "universal-supported",
+      "pair": "universal",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Two of the five datasets improved; the other three did not."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 835,
+          "completion_tokens": 64,
+          "total_tokens": 899,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 323
+        },
+        "latency_ms": 860.639,
+        "output_sha256": "a745a855ea9f0fca4fb0270dbf18b9b3d59e96c2d9c8cbbe0e45dc58e7585a8d"
+      }
+    },
+    {
+      "id": "universal-corrupted",
+      "pair": "universal",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 485,
+          "completion_tokens": 27,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 229
+        },
+        "latency_ms": 638.916,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "universal-corrupted",
+      "pair": "universal",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Two of the five datasets improved; the other three did not."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 832,
+          "completion_tokens": 66,
+          "total_tokens": 898,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 320
+        },
+        "latency_ms": 600.244,
+        "output_sha256": "1f0df5d4a7f7d5d279d62057dbea2e9fc9def379b56697c9aa06c5e32de3c95e"
+      }
+    },
+    {
+      "id": "language-supported",
+      "pair": "language",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 498,
+          "completion_tokens": 27,
+          "total_tokens": 525,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 242
+        },
+        "latency_ms": 679.82,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "language-supported",
+      "pair": "language",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The dataset contains English examples. We do not report whether other languages are present."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 845,
+          "completion_tokens": 67,
+          "total_tokens": 912,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 333
+        },
+        "latency_ms": 558.506,
+        "output_sha256": "e110d439c17fc234ce679e472e438a15e7b39ab4eedd7e71118159d1da0d6ee9"
+      }
+    },
+    {
+      "id": "language-corrupted",
+      "pair": "language",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 493,
+          "completion_tokens": 27,
+          "total_tokens": 520,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 237
+        },
+        "latency_ms": 833.683,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "language-corrupted",
+      "pair": "language",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "insufficient",
+            "relevant": true,
+            "support": []
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 840,
+          "completion_tokens": 32,
+          "total_tokens": 872,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 328
+        },
+        "latency_ms": 664.06,
+        "output_sha256": "a50b9732fa52e6d1173a79446327989073c61747c00a32c33c9bd6e3302c6819"
+      }
+    },
+    {
+      "id": "planned-supported",
+      "pair": "planned",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 504,
+          "completion_tokens": 27,
+          "total_tokens": 531,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 248
+        },
+        "latency_ms": 480.84,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "planned-supported",
+      "pair": "planned",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Evaluation of a multilingual model is left to future work."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 851,
+          "completion_tokens": 62,
+          "total_tokens": 913,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 339
+        },
+        "latency_ms": 1037.724,
+        "output_sha256": "a6426da50d127e505c9f2de167c3bfd37330a09259ac042850c7e2575c44f260"
+      }
+    },
+    {
+      "id": "planned-corrupted",
+      "pair": "planned",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 499,
+          "completion_tokens": 27,
+          "total_tokens": 526,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 243
+        },
+        "latency_ms": 898.991,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "planned-corrupted",
+      "pair": "planned",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Evaluation of a multilingual model is left to future work."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 846,
+          "completion_tokens": 64,
+          "total_tokens": 910,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 334
+        },
+        "latency_ms": 705.27,
+        "output_sha256": "a660cb8dd3748b071e5a92411defdc8c57e6fc24dc316b7ee1c50a876f0ec2a8"
+      }
+    },
+    {
+      "id": "baseline-supported",
+      "pair": "baseline",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 507,
+          "completion_tokens": 27,
+          "total_tokens": 534,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 251
+        },
+        "latency_ms": 700.582,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "baseline-supported",
+      "pair": "baseline",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We discuss Model B as related work but do not evaluate it. Our only evaluated baseline is Model A."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 854,
+          "completion_tokens": 72,
+          "total_tokens": 926,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 342
+        },
+        "latency_ms": 657.932,
+        "output_sha256": "ce8d395a40c435b3c29dc675550f097b9e8a2ec3a5eedd8e2c81e2678bfea4f9"
+      }
+    },
+    {
+      "id": "baseline-corrupted",
+      "pair": "baseline",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 506,
+          "completion_tokens": 27,
+          "total_tokens": 533,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 250
+        },
+        "latency_ms": 1032.693,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "baseline-corrupted",
+      "pair": "baseline",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": []
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 853,
+          "completion_tokens": 33,
+          "total_tokens": 886,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 341
+        },
+        "latency_ms": 917.935,
+        "output_sha256": "624e145a86a94b0d058c50e17a4b8f9da962b1a793fbb8db7567a7a757a882d9"
+      }
+    },
+    {
+      "id": "comparison-supported",
+      "pair": "comparison",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 496,
+          "completion_tokens": 27,
+          "total_tokens": 523,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 240
+        },
+        "latency_ms": 818.542,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "comparison-supported",
+      "pair": "comparison",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Model A took 10 seconds; Model B took 20 seconds on the same device."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 843,
+          "completion_tokens": 58,
+          "total_tokens": 901,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 331
+        },
+        "latency_ms": 611.098,
+        "output_sha256": "45b2b1f1bee9a103ef2a35e91852c85d5bfc2516fda68889aa7279e92985ad1c"
+      }
+    },
+    {
+      "id": "comparison-corrupted",
+      "pair": "comparison",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 496,
+          "completion_tokens": 27,
+          "total_tokens": 523,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 240
+        },
+        "latency_ms": 768.023,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "comparison-corrupted",
+      "pair": "comparison",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": []
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 843,
+          "completion_tokens": 33,
+          "total_tokens": 876,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 331
+        },
+        "latency_ms": 716.333,
+        "output_sha256": "624e145a86a94b0d058c50e17a4b8f9da962b1a793fbb8db7567a7a757a882d9"
+      }
+    },
+    {
+      "id": "units-supported",
+      "pair": "units",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 480,
+          "completion_tokens": 27,
+          "total_tokens": 507,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 224
+        },
+        "latency_ms": 877.389,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "units-supported",
+      "pair": "units",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Peak memory usage was 8 GB."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 827,
+          "completion_tokens": 60,
+          "total_tokens": 887,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 315
+        },
+        "latency_ms": 679.303,
+        "output_sha256": "71847a508a8f7b3c69c1ed764e2867083b4b47b65204d137f14cdaaa72299881"
+      }
+    },
+    {
+      "id": "units-corrupted",
+      "pair": "units",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 480,
+          "completion_tokens": 27,
+          "total_tokens": 507,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 224
+        },
+        "latency_ms": 593.109,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "units-corrupted",
+      "pair": "units",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Peak memory usage was 8 GB."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 827,
+          "completion_tokens": 62,
+          "total_tokens": 889,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 315
+        },
+        "latency_ms": 992.374,
+        "output_sha256": "3c1bd67249e5a97f656d83c26f8d3b56644b47be98b6749ce25edefdfd6493bd"
+      }
+    },
+    {
+      "id": "split-supported",
+      "pair": "split",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 490,
+          "completion_tokens": 27,
+          "total_tokens": 517,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 234
+        },
+        "latency_ms": 574.685,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "split-supported",
+      "pair": "split",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The development score was 90, whereas the test score was 75."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 837,
+          "completion_tokens": 66,
+          "total_tokens": 903,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 325
+        },
+        "latency_ms": 785.466,
+        "output_sha256": "6cb46ed0f255c190c36bb8665d0200c69a15533631555ecf8d2f9c291e80b50f"
+      }
+    },
+    {
+      "id": "split-corrupted",
+      "pair": "split",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 490,
+          "completion_tokens": 27,
+          "total_tokens": 517,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 234
+        },
+        "latency_ms": 695.664,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "split-corrupted",
+      "pair": "split",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The development score was 90, whereas the test score was 75."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 837,
+          "completion_tokens": 68,
+          "total_tokens": 905,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 325
+        },
+        "latency_ms": 946.26,
+        "output_sha256": "90a3cc0eb27ffbe032043f87134ac1642146806cf000712bc9349eeb0fa70598"
+      }
+    },
+    {
+      "id": "causality-supported",
+      "pair": "causality",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 493,
+          "completion_tokens": 27,
+          "total_tokens": 520,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 237
+        },
+        "latency_ms": 655.859,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "causality-supported",
+      "pair": "causality",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The observational study found a correlation, but does not establish a causal relationship."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 840,
+          "completion_tokens": 55,
+          "total_tokens": 895,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 328
+        },
+        "latency_ms": 1046.034,
+        "output_sha256": "91f941b4aa4c04572a7725d57b87d5e97e2cfe9db7aa37a3e7b502a0254cd250"
+      }
+    },
+    {
+      "id": "causality-corrupted",
+      "pair": "causality",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 492,
+          "completion_tokens": 27,
+          "total_tokens": 519,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 236
+        },
+        "latency_ms": 950.705,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "causality-corrupted",
+      "pair": "causality",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The observational study found a correlation, but does not establish a causal relationship."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 839,
+          "completion_tokens": 68,
+          "total_tokens": 907,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 327
+        },
+        "latency_ms": 790.109,
+        "output_sha256": "7cd18ae7a807a47ff0aadedf40790e0261b5e6036b392a9c302e1188ee37db66"
+      }
+    },
+    {
+      "id": "certainty-supported",
+      "pair": "certainty",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 484,
+          "completion_tokens": 23,
+          "total_tokens": 507,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 228
+        },
+        "latency_ms": 980.874,
+        "output_sha256": "c0edc7e5018322d4ce425d88298c717a85858caeaa733a98de8854055b59f478"
+      }
+    },
+    {
+      "id": "certainty-supported",
+      "pair": "certainty",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The improvement was not statistically significant at the specified threshold."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 831,
+          "completion_tokens": 51,
+          "total_tokens": 882,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 319
+        },
+        "latency_ms": 745.561,
+        "output_sha256": "a281aa04cd509283a3ba21f851135ef9a380fcba51fa4a1f9e2b99f29c282d10"
+      }
+    },
+    {
+      "id": "certainty-corrupted",
+      "pair": "certainty",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 483,
+          "completion_tokens": 27,
+          "total_tokens": 510,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 227
+        },
+        "latency_ms": 893.948,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "certainty-corrupted",
+      "pair": "certainty",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The improvement was not statistically significant at the specified threshold."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 830,
+          "completion_tokens": 64,
+          "total_tokens": 894,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 318
+        },
+        "latency_ms": 506.884,
+        "output_sha256": "c66d68a027ca05df1b1b79f2927c7fa974bc25c05b9c320d81918fa9fa549256"
+      }
+    },
+    {
+      "id": "scope-supported",
+      "pair": "scope",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 507,
+          "completion_tokens": 23,
+          "total_tokens": 530,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 251
+        },
+        "latency_ms": 511.948,
+        "output_sha256": "c0edc7e5018322d4ce425d88298c717a85858caeaa733a98de8854055b59f478"
+      }
+    },
+    {
+      "id": "scope-supported",
+      "pair": "scope",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 854,
+          "completion_tokens": 71,
+          "total_tokens": 925,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 342
+        },
+        "latency_ms": 825.576,
+        "output_sha256": "281674d4bd94438296cb4e5b24020df77f18de21823b428a57d3e3537c80a9f5"
+      }
+    },
+    {
+      "id": "scope-corrupted",
+      "pair": "scope",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 506,
+          "completion_tokens": 27,
+          "total_tokens": 533,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 250
+        },
+        "latency_ms": 1048.526,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "scope-corrupted",
+      "pair": "scope",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "The guarantee applies only to inputs of at most 100 tokens. It does not cover longer inputs."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 853,
+          "completion_tokens": 73,
+          "total_tokens": 926,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 341
+        },
+        "latency_ms": 1074.368,
+        "output_sha256": "7b8b2ddf8d0f36ac6e8c67ed5b118502bfc827185baab38f04641df95df819aa"
+      }
+    },
+    {
+      "id": "direction-supported",
+      "pair": "direction",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 485,
+          "completion_tokens": 27,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 229
+        },
+        "latency_ms": 929.62,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "direction-supported",
+      "pair": "direction",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Latency fell from 40 milliseconds to 30 milliseconds."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 832,
+          "completion_tokens": 63,
+          "total_tokens": 895,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 320
+        },
+        "latency_ms": 793.791,
+        "output_sha256": "377ce20d0c72da6b302d47b6ee8d3a91b2da0a99e502c4b3a06bd0616a5d1ce9"
+      }
+    },
+    {
+      "id": "direction-corrupted",
+      "pair": "direction",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 485,
+          "completion_tokens": 27,
+          "total_tokens": 512,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 229
+        },
+        "latency_ms": 961.126,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "direction-corrupted",
+      "pair": "direction",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Latency fell from 40 milliseconds to 30 milliseconds."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 832,
+          "completion_tokens": 65,
+          "total_tokens": 897,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 320
+        },
+        "latency_ms": 847.899,
+        "output_sha256": "aba4f3d1511312d34c7161fbb87d5ec42c8d92bde7dc8af917dd1f1a1556bef2"
+      }
+    },
+    {
+      "id": "subset-supported",
+      "pair": "subset",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 492,
+          "completion_tokens": 27,
+          "total_tokens": 519,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 236
+        },
+        "latency_ms": 898.568,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "subset-supported",
+      "pair": "subset",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We annotated 100 items and used 80 of them for training."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 839,
+          "completion_tokens": 54,
+          "total_tokens": 893,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 327
+        },
+        "latency_ms": 751.98,
+        "output_sha256": "40fdeefea0a22708e7ae70faeb1866f545ee4fc5976cea32eb10565e4bd60e67"
+      }
+    },
+    {
+      "id": "subset-corrupted",
+      "pair": "subset",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 492,
+          "completion_tokens": 27,
+          "total_tokens": 519,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 236
+        },
+        "latency_ms": 666.007,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "subset-corrupted",
+      "pair": "subset",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We annotated 100 items and used 80 of them for training."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 839,
+          "completion_tokens": 67,
+          "total_tokens": 906,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 327
+        },
+        "latency_ms": 865.868,
+        "output_sha256": "2d46b9d714b3497ce8943cbba0d1d7ac4aabe23ff65ba3e873c90609f0e74149"
+      }
+    },
+    {
+      "id": "attribution-supported",
+      "pair": "attribution",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 481,
+          "completion_tokens": 23,
+          "total_tokens": 504,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 225
+        },
+        "latency_ms": 690.406,
+        "output_sha256": "c0edc7e5018322d4ce425d88298c717a85858caeaa733a98de8854055b59f478"
+      }
+    },
+    {
+      "id": "attribution-supported",
+      "pair": "attribution",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Jones proposed the current method."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 828,
+          "completion_tokens": 57,
+          "total_tokens": 885,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 316
+        },
+        "latency_ms": 681.496,
+        "output_sha256": "3716e4f2c5f0c2fd68eb0b7630f7a724754c3dfdfdfbdcbdfc29c4e9f49480d9"
+      }
+    },
+    {
+      "id": "attribution-corrupted",
+      "pair": "attribution",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 481,
+          "completion_tokens": 27,
+          "total_tokens": 508,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 225
+        },
+        "latency_ms": 816.081,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "attribution-corrupted",
+      "pair": "attribution",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Smith proposed the baseline. Jones proposed the current method."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 828,
+          "completion_tokens": 64,
+          "total_tokens": 892,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 316
+        },
+        "latency_ms": 1053.968,
+        "output_sha256": "576e37f507b39b139f49d283caac0968c939ab6826fb01df4ab8afb9f7a6cfa6"
+      }
+    },
+    {
+      "id": "coverage-supported",
+      "pair": "coverage",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 484,
+          "completion_tokens": 27,
+          "total_tokens": 511,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 228
+        },
+        "latency_ms": 735.804,
+        "output_sha256": "cfb4c565e98c65d6773ac3d3aac505038d7a3241f169ec2fbbbed478c6e7cee0"
+      }
+    },
+    {
+      "id": "coverage-supported",
+      "pair": "coverage",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We performed automatic evaluations only and did not perform human evaluations."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 831,
+          "completion_tokens": 63,
+          "total_tokens": 894,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 319
+        },
+        "latency_ms": 698.129,
+        "output_sha256": "72941ab1bc897cbb4e7b09c70084f74db0180022ed354581128bb3919f4eab33"
+      }
+    },
+    {
+      "id": "coverage-corrupted",
+      "pair": "coverage",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 483,
+          "completion_tokens": 27,
+          "total_tokens": 510,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 227
+        },
+        "latency_ms": 1142.111,
+        "output_sha256": "0ab789c0f9cadb4c6396678c0ff2e9e6ad99b237282f341bc2263133b7a64a39"
+      }
+    },
+    {
+      "id": "coverage-corrupted",
+      "pair": "coverage",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "We performed automatic evaluations only and did not perform human evaluations."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 830,
+          "completion_tokens": 65,
+          "total_tokens": 895,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 318
+        },
+        "latency_ms": 629.79,
+        "output_sha256": "421cd6dadc55e074bf4c76559999f75bceea9ebf93097aff8a8737a4ee123d73"
+      }
+    },
+    {
+      "id": "definition-supported",
+      "pair": "definition",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 488,
+          "completion_tokens": 23,
+          "total_tokens": 511,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 232
+        },
+        "latency_ms": 929.745,
+        "output_sha256": "c0edc7e5018322d4ce425d88298c717a85858caeaa733a98de8854055b59f478"
+      }
+    },
+    {
+      "id": "definition-supported",
+      "pair": "definition",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Robustness is the fraction of predictions unchanged after perturbation."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 835,
+          "completion_tokens": 52,
+          "total_tokens": 887,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 323
+        },
+        "latency_ms": 533.291,
+        "output_sha256": "7a71140df0774ff736c96c171a688d4f519ede4e3c184ce0908c75bc14fa12bd"
+      }
+    },
+    {
+      "id": "definition-corrupted",
+      "pair": "definition",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 488,
+          "completion_tokens": 23,
+          "total_tokens": 511,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 232
+        },
+        "latency_ms": 499.154,
+        "output_sha256": "15911b09861b87281e132c1f1882a62fee74327278dfb92a52bf69da51100520"
+      }
+    },
+    {
+      "id": "definition-corrupted",
+      "pair": "definition",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "contradicted",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "Robustness is the fraction of predictions unchanged after perturbation."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 835,
+          "completion_tokens": 54,
+          "total_tokens": 889,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 323
+        },
+        "latency_ms": 1016.965,
+        "output_sha256": "4da3f767fe16e51906c7856b119358e2acbad92eac88daf3151c2fcbfba76879"
+      }
+    },
+    {
+      "id": "ownership-true",
+      "pair": "ownership",
+      "profile": "v1",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          },
+          {
+            "claim_index": 1,
+            "supported": true
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 540,
+          "completion_tokens": 39,
+          "total_tokens": 579,
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 156
+        },
+        "latency_ms": 515.419,
+        "output_sha256": "5f8ed1b04c2b275f4646f85fafc8878bc687b79d2244036ec7e734bf33f2f9e9"
+      }
+    },
+    {
+      "id": "ownership-true",
+      "pair": "ownership",
+      "profile": "v2",
+      "expected_publish": true,
+      "published": true,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "There were 50 training examples."
+              }
+            ]
+          },
+          {
+            "claim_index": 1,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "b",
+                "quote": "There were 20 test examples."
+              }
+            ]
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 887,
+          "completion_tokens": 101,
+          "total_tokens": 988,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 375
+        },
+        "latency_ms": 1115.261,
+        "output_sha256": "c77644eb6ef2b7fa6b66307139e57640b023d7f86d58a0188a8fcde3c8c58149"
+      }
+    },
+    {
+      "id": "ownership-false",
+      "pair": "ownership",
+      "profile": "v1",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "supported": true
+          },
+          {
+            "claim_index": 1,
+            "supported": false
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 540,
+          "completion_tokens": 39,
+          "total_tokens": 579,
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 156
+        },
+        "latency_ms": 652.509,
+        "output_sha256": "a31952463960ce60482415d941b03e910fb70fdeb2eb137482c398cae5db9369"
+      }
+    },
+    {
+      "id": "ownership-false",
+      "pair": "ownership",
+      "profile": "v2",
+      "expected_publish": false,
+      "published": false,
+      "status": "completed",
+      "verdict": {
+        "addresses_question": true,
+        "verdicts": [
+          {
+            "claim_index": 0,
+            "label": "supported",
+            "relevant": true,
+            "support": [
+              {
+                "chunk_id": "a",
+                "quote": "There were 50 training examples."
+              }
+            ]
+          },
+          {
+            "claim_index": 1,
+            "label": "insufficient",
+            "relevant": true,
+            "support": []
+          }
+        ]
+      },
+      "meta": {
+        "requested_model": "deepseek-flash",
+        "model": "deepseek-flash",
+        "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+        "usage": {
+          "prompt_tokens": 887,
+          "completion_tokens": 82,
+          "total_tokens": 969,
+          "prompt_cache_hit_tokens": 640,
+          "prompt_cache_miss_tokens": 247
+        },
+        "latency_ms": 1045.805,
+        "output_sha256": "ebef0e9b83f608d8ca22e421593dea9fc4700973df686a066e08a1fb7b8a5e64"
+      }
+    }
+  ],
+  "complete": true,
+  "budget": {
+    "calls": 935,
+    "estimated_charged_usd": 0.5581794,
+    "unsettled_calls": 0,
+    "limits": {
+      "max_calls": 1000,
+      "max_estimated_usd": 1.0
+    },
+    "rate_basis": "2026-09-22 deepseek-flash peak uncached; conservative estimate, not invoice"
+  },
+  "summary": {
+    "v1": {
+      "total": 40,
+      "completed": 40,
+      "faults": 0,
+      "supported_published": 20,
+      "supported_total": 20,
+      "unsupported_published": 0,
+      "unsupported_total": 20,
+      "unsupported_rejected_valid_verdict": 20
+    },
+    "v2": {
+      "total": 40,
+      "completed": 40,
+      "faults": 0,
+      "supported_published": 20,
+      "supported_total": 20,
+      "unsupported_published": 0,
+      "unsupported_total": 20,
+      "unsupported_rejected_valid_verdict": 20
+    }
+  }
+}

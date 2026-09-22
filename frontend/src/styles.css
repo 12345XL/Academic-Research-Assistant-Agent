@@ -30,3 +30,10 @@
 .claim-references summary { cursor: pointer; color: #357356; }
 .claim-references blockquote { margin: 10px 0; padding: 8px 14px; border-left: 2px solid #99bfa5; background: #fff; }
 .answer-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+.experiment-options { margin: 12px 0; font-size: 12px; color: var(--muted); }
+.experiment-options summary { cursor: pointer; padding: 6px 0; }
+.experiment-options p { line-height: 1.7; margin: 10px 0 0; }
+.experiment-fields { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 10px; }
+.experiment-fields label { display: flex; align-items: center; gap: 7px; }
+.experiment-fields select { padding: 6px; max-width: 100%; }

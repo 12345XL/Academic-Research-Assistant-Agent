@@ -1,0 +1,987 @@
+{
+  "seed": 20260922,
+  "replicates": 2000,
+  "method": "paired percentile bootstrap resampling paper clusters; each sample recomputes question mean; no multiplicity correction",
+  "generation_v2_minus_v1": {
+    "train_tuning": {
+      "all": {
+        "answer_f1": {
+          "questions": 80,
+          "papers": 77,
+          "mean_delta": 0.15212321977174406,
+          "ci95": [
+            0.08233037569268209,
+            0.22797066739142488
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 75,
+          "papers": 72,
+          "mean_delta": 0.08193650793650793,
+          "ci95": [
+            0.0126031746031746,
+            0.15442612942612943
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.3,
+          "ci95": [
+            0.1,
+            0.5
+          ]
+        },
+        "published": {
+          "questions": 80,
+          "papers": 77,
+          "mean_delta": -0.0625,
+          "ci95": [
+            -0.16666666666666666,
+            0.04819277108433735
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 60,
+          "papers": 58,
+          "mean_delta": 0.08333333333333333,
+          "ci95": [
+            0.016666666666666666,
+            0.16666666666666666
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.25,
+            0.15
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        }
+      },
+      "extractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0.08591398515287946,
+          "ci95": [
+            -0.0006531190456530547,
+            0.1613795859563398
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0.05559523809523809,
+          "ci95": [
+            -0.07568922305764411,
+            0.17936507936507937
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0,
+          "ci95": [
+            -0.2631578947368421,
+            0.22727272727272727
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "abstractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.022313742418945324,
+          "ci95": [
+            -0.043283057084091865,
+            0.08802674607351574
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 19,
+          "papers": 19,
+          "mean_delta": 0.07894736842105263,
+          "ci95": [
+            -0.01754385964912281,
+            0.17543859649122806
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.2,
+            0.1
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.1,
+          "ci95": [
+            0,
+            0.25
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "boolean": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.30026515151515154,
+          "ci95": [
+            0.10208333333333333,
+            0.5020833333333333
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 16,
+          "papers": 16,
+          "mean_delta": -0.02916666666666667,
+          "ci95": [
+            -0.1625,
+            0.10416666666666666
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.3,
+          "ci95": [
+            0.1,
+            0.5
+          ]
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.15,
+          "ci95": [
+            -0.35,
+            0.05
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.15,
+          "ci95": [
+            0,
+            0.3
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "unanswerable": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.25,
+            0.15
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.25,
+            0.15
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        }
+      }
+    },
+    "train_regression": {
+      "all": {
+        "answer_f1": {
+          "questions": 80,
+          "papers": 67,
+          "mean_delta": 0.21026339615438,
+          "ci95": [
+            0.13329798395336695,
+            0.29118638984913797
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 73,
+          "papers": 61,
+          "mean_delta": 0.09765166340508806,
+          "ci95": [
+            0.0272108843537415,
+            0.16277056277056276
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.4,
+          "ci95": [
+            0.2,
+            0.6
+          ]
+        },
+        "published": {
+          "questions": 80,
+          "papers": 67,
+          "mean_delta": -0.0875,
+          "ci95": [
+            -0.17105263157894737,
+            -0.012195121951219513
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 60,
+          "papers": 51,
+          "mean_delta": 0.1,
+          "ci95": [
+            0.03389830508474576,
+            0.1774193548387097
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.15,
+          "ci95": [
+            -0.3,
+            0
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.15,
+          "ci95": [
+            0,
+            0.3
+          ]
+        }
+      },
+      "extractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.2313560600183714,
+          "ci95": [
+            0.1005034498703871,
+            0.3835958061087962
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 19,
+          "papers": 17,
+          "mean_delta": 0.09899749373433585,
+          "ci95": [
+            0.03759398496240602,
+            0.16071428571428573
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": -0.1,
+          "ci95": [
+            -0.25,
+            0
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "abstractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.05165585793248195,
+          "ci95": [
+            -0.014696135328416226,
+            0.12641731330985378
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 19,
+          "papers": 18,
+          "mean_delta": 0.06666666666666667,
+          "ci95": [
+            -0.07222222222222223,
+            0.2111111111111111
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.2777777777777778,
+            0.16666666666666666
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.1,
+          "ci95": [
+            0,
+            0.22727272727272727
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "boolean": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.4080416666666667,
+          "ci95": [
+            0.20225,
+            0.609375
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 15,
+          "papers": 15,
+          "mean_delta": 0.0653968253968254,
+          "ci95": [
+            -0.09333333333333334,
+            0.2511111111111111
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.4,
+          "ci95": [
+            0.2,
+            0.6
+          ]
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.2,
+            0.1
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "unanswerable": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.15,
+          "ci95": [
+            0.0,
+            0.3
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.15,
+          "ci95": [
+            0.0,
+            0.3
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.15,
+          "ci95": [
+            -0.3,
+            0
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.15,
+          "ci95": [
+            -0.3,
+            0
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.15,
+          "ci95": [
+            0,
+            0.3
+          ]
+        }
+      }
+    },
+    "dev_comparison": {
+      "all": {
+        "answer_f1": {
+          "questions": 80,
+          "papers": 68,
+          "mean_delta": 0.2283181482200892,
+          "ci95": [
+            0.14405502372402415,
+            0.31932188301009257
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 73,
+          "papers": 62,
+          "mean_delta": 0.10525114155251142,
+          "ci95": [
+            0.04488888888888888,
+            0.17222222222222222
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.35,
+          "ci95": [
+            0.15,
+            0.5789473684210527
+          ]
+        },
+        "published": {
+          "questions": 80,
+          "papers": 68,
+          "mean_delta": -0.1,
+          "ci95": [
+            -0.1794871794871795,
+            -0.024096385542168676
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 60,
+          "papers": 54,
+          "mean_delta": 0.1,
+          "ci95": [
+            0.03278688524590164,
+            0.18032786885245902
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0,
+          "ci95": [
+            -0.15,
+            0.15
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        }
+      },
+      "extractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2560330706711629,
+          "ci95": [
+            0.1051268887292412,
+            0.4214894611165158
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 19,
+          "papers": 19,
+          "mean_delta": 0.04649122807017545,
+          "ci95": [
+            -0.07105263157894735,
+            0.14912280701754388
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": -0.15,
+          "ci95": [
+            -0.3,
+            0
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "abstractive": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0.10411452220919386,
+          "ci95": [
+            0.02133759195036471,
+            0.19543468938425723
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 19,
+          "papers": 18,
+          "mean_delta": 0.0719298245614035,
+          "ci95": [
+            -0.025925925925925932,
+            0.18333333333333332
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": -0.2,
+          "ci95": [
+            -0.4090909090909091,
+            0
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 19,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.047619047619047616,
+            0.4
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "boolean": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.353125,
+          "ci95": [
+            0.153125,
+            0.5822368421052632
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 15,
+          "papers": 14,
+          "mean_delta": 0.09555555555555555,
+          "ci95": [
+            0.03333333333333333,
+            0.17619047619047618
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.35,
+          "ci95": [
+            0.15,
+            0.5789473684210527
+          ]
+        },
+        "published": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": -0.05,
+          "ci95": [
+            -0.14285714285714285,
+            0
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 20,
+          "papers": 18,
+          "mean_delta": 0.1,
+          "ci95": [
+            0,
+            0.23809523809523808
+          ]
+        },
+        "unanswerable_false_publication": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        }
+      },
+      "unanswerable": {
+        "answer_f1": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        },
+        "evidence_f1_mapped": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        },
+        "direct_boolean_accuracy": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "published": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0,
+          "ci95": [
+            -0.15,
+            0.15
+          ]
+        },
+        "answerable_abstention": {
+          "questions": 0,
+          "papers": 0,
+          "mean_delta": null,
+          "ci95": null
+        },
+        "unanswerable_false_publication": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0,
+          "ci95": [
+            -0.15,
+            0.15
+          ]
+        },
+        "unanswerable_explicit_abstention": {
+          "questions": 20,
+          "papers": 20,
+          "mean_delta": 0.2,
+          "ci95": [
+            0.05,
+            0.4
+          ]
+        }
+      }
+    }
+  },
+  "rrf_equal_minus_dense": {
+    "train_tuning": {
+      "hit": {
+        "questions": 55,
+        "papers": 53,
+        "mean_delta": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      "recall": {
+        "questions": 55,
+        "papers": 53,
+        "mean_delta": 0.0009090909090909098,
+        "ci95": [
+          -0.010909090909090906,
+          0.013636363636363636
+        ]
+      },
+      "mrr": {
+        "questions": 55,
+        "papers": 53,
+        "mean_delta": -0.009393939393939394,
+        "ci95": [
+          -0.030555555555555555,
+          0.0030303030303030294
+        ]
+      }
+    },
+    "train_regression": {
+      "hit": {
+        "questions": 53,
+        "papers": 45,
+        "mean_delta": 0.018867924528301886,
+        "ci95": [
+          -0.0392156862745098,
+          0.09259259259259259
+        ]
+      },
+      "recall": {
+        "questions": 53,
+        "papers": 45,
+        "mean_delta": 0.016172506738544475,
+        "ci95": [
+          -0.0431266846361186,
+          0.09090909090909091
+        ]
+      },
+      "mrr": {
+        "questions": 53,
+        "papers": 45,
+        "mean_delta": 0.011635220125786163,
+        "ci95": [
+          -0.01730769230769231,
+          0.058787878787878785
+        ]
+      }
+    },
+    "dev_comparison": {
+      "hit": {
+        "questions": 53,
+        "papers": 48,
+        "mean_delta": 0.018867924528301886,
+        "ci95": [
+          0.0,
+          0.058823529411764705
+        ]
+      },
+      "recall": {
+        "questions": 53,
+        "papers": 48,
+        "mean_delta": 0.018867924528301886,
+        "ci95": [
+          0.0,
+          0.058823529411764705
+        ]
+      },
+      "mrr": {
+        "questions": 53,
+        "papers": 48,
+        "mean_delta": 0.0110062893081761,
+        "ci95": [
+          -0.017628205128205128,
+          0.05555555555555555
+        ]
+      }
+    }
+  }
+}

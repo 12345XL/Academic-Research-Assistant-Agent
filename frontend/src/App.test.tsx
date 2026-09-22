@@ -247,3 +247,34 @@ it('ignores late generated answers after switching the paper',async()=>{
   await act(async()=>done(json(answered)));
   expect(screen.queryByText('已核验的结论')).toBeNull();
 });
+
+it('keeps fusion constant separate from output count and sends selected weights',async()=>{
+  let submitted:Record<string,unknown>={};
+  setupFetch(options=>{ submitted=JSON.parse(String(options.body)); return Promise.resolve(json({...evidence,trace:{...evidence.trace,retriever:'hybrid',rrf_constant:10,dense_weight:.75}}));});
+  render(<App/>); await screen.findByRole('heading',{level:1,name:papers[0].title});
+  expect(screen.queryByLabelText('RRF 平滑常数 K')).toBeNull();
+  fireEvent.change(screen.getByLabelText('检索方式'),{target:{value:'hybrid'}});
+  fireEvent.change(screen.getByLabelText('RRF 平滑常数 K'),{target:{value:'10'}});
+  fireEvent.change(screen.getByLabelText('向量融合权重'),{target:{value:'0.75'}});
+  fireEvent.change(screen.getByLabelText('输入检索问题'),{target:{value:'method'}});
+  fireEvent.click(screen.getByRole('button',{name:'检索证据'}));
+  await screen.findByText(evidence.citations[0].text);
+  expect(submitted).toMatchObject({rrf_constant:10,dense_weight:.75,top_k:5});
+  expect(screen.getByText(/K=10 · 向量权重 75%/)).toBeTruthy();
+  fireEvent.change(screen.getByLabelText('RRF 平滑常数 K'),{target:{value:'100'}});
+  expect(screen.queryByText(evidence.citations[0].text)).toBeNull();
+});
+
+it('sends the explicitly selected v2 strategy and English language',async()=>{
+  let submitted:Record<string,unknown>={};
+  setupAnswer((options:RequestInit)=>{submitted=JSON.parse(String(options.body));return Promise.resolve(json(answered));});
+  render(<App/>);await screen.findByRole('heading',{level:1,name:papers[0].title});
+  fireEvent.change(screen.getByLabelText('任务'),{target:{value:'answer'}});
+  expect((screen.getByLabelText('回答策略') as HTMLSelectElement).value).toBe('v1');
+  fireEvent.change(screen.getByLabelText('回答策略'),{target:{value:'v2'}});
+  fireEvent.change(screen.getByLabelText('回答语言'),{target:{value:'en'}});
+  fireEvent.change(screen.getByLabelText('输入检索问题'),{target:{value:'method'}});
+  fireEvent.click(screen.getByRole('button',{name:'生成并核验回答'}));
+  await screen.findByText('已核验的结论');
+  expect(submitted).toMatchObject({profile:'v2',language:'en'});
+});

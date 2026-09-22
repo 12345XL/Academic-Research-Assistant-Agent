@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import time
 import uuid
 import threading
@@ -90,7 +91,7 @@ class PersistentEvidenceService:
         self._vector_store = vector_store
         self._reranker = reranker
 
-    def _candidates(self, query, paper_id, top_k, mode, query_vector):
+    def _candidates(self, query, paper_id, top_k, mode, query_vector, rrf_constant=60, dense_weight=0.5):
         if paper_id not in self._evidence.papers:
             raise KeyError(paper_id)
         if mode == "bm25":
@@ -121,7 +122,8 @@ class PersistentEvidenceService:
             cached = self._evidence.index.paragraphs.get(item["chunk_id"])
             if cached is None or cached["paper_id"] != paper_id or cached["text_sha256"] != item["text_sha256"]:
                 raise CorpusIntegrityError("向量候选与当前证据不一致")
-        ranked = (reciprocal_rank_fusion([list(bm25), list(dense)], top_k)
+        ranked = (reciprocal_rank_fusion([list(bm25), list(dense)], top_k, rrf_constant,
+                                          [2 * (1 - dense_weight), 2 * dense_weight])
                   if mode == "hybrid" else [(r["chunk_id"], r["score"]) for r in vector_hits[:top_k]])
         citations = []
         for rank, (chunk_id, score) in enumerate(ranked, 1):
@@ -133,7 +135,8 @@ class PersistentEvidenceService:
                                      "cosine": dense.get(chunk_id, {}).get("score")}})
         result.update(top_k=top_k, citations=citations, status="evidence_found" if citations else "no_evidence",
                       notice="仅返回检索原文；相似度或融合分数不是置信度，尚未生成或验证答案。")
-        result["trace"].update(retriever=mode, candidate_pool=pool, rrf_constant=60 if mode == "hybrid" else None,
+        result["trace"].update(retriever=mode, candidate_pool=pool, rrf_constant=rrf_constant if mode == "hybrid" else None,
+                               dense_weight=dense_weight if mode == "hybrid" else None,
                                vector_collection=collection_id(self._revision), embedding=CONFIG,
                                vector_latency_ms=round(vector_latency, 3), model_calls=0 if query_vector is not None else 1,
                                query_embedding_precomputed=query_vector is not None, returned=len(citations),
@@ -149,7 +152,11 @@ class PersistentEvidenceService:
             self._revision = actual_revision
 
     def retrieve(self, query: str, paper_id: str, top_k: int = 5, mode: str = "bm25", *,
-                 query_vector=None, rerank: bool = False) -> dict[str, Any]:
+                 query_vector=None, rerank: bool = False, rrf_constant: int = 60, dense_weight: float = 0.5) -> dict[str, Any]:
+        if (type(rrf_constant) is not int or not 1 <= rrf_constant <= 1000
+                or type(dense_weight) not in (int, float) or not math.isfinite(dense_weight)
+                or not 0 <= dense_weight <= 1):
+            raise ValueError("Invalid RRF constant or dense weight")
         if mode not in {"bm25", "dense", "hybrid"}:
             raise ValueError("Unknown retrieval mode")
         if not 1 <= top_k <= 50 or not query.strip():
@@ -158,7 +165,7 @@ class PersistentEvidenceService:
         with self._lock:
             for _ in range(2):
                 self._ensure_snapshot()
-                result = self._candidates(query, paper_id, max(20, top_k) if rerank else top_k, mode, query_vector)
+                result = self._candidates(query, paper_id, max(20, top_k) if rerank else top_k, mode, query_vector, rrf_constant, dense_weight)
                 citations = result["citations"]
                 facts = self.repository.get_chunks([item["chunk_id"] for item in citations], paper_id)
                 if any(

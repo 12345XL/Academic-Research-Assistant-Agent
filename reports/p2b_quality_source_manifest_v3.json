@@ -1,0 +1,30 @@
+{
+  "generation_source_sha256": "70b82df1b588255e248953ea1f39b4355b6746698642690499ae46135b3d8f14",
+  "files": {
+    "src/research_agent/__init__.py": "50f8c6a3406af67b3977b5b6e7c9e7821fd93a552d349585fe4e8c7b5afd38da",
+    "src/research_agent/api.py": "acf5f673ba86d7c1fb41dc776fe132c5ceb6c55aa8811f240d65768dff7a8b6c",
+    "src/research_agent/cli.py": "d011fe77326c9c07603afafe9b5db90b470637a1ce633a0977acee9c1965d9dd",
+    "src/research_agent/dataset.py": "8905a63856d7d038fed1f117c90b6f0b1eda253b24d47014087a65686ef7316e",
+    "src/research_agent/embeddings.py": "24a7feadd932105f9696dba037f30e1d5284dcd4eaf460dec8467caec75906a6",
+    "src/research_agent/evaluate.py": "bb09e1a0e7da46bb8c9bd43487ac1cdc80e9c5d1c418f7b00c97cfd8ead6f159",
+    "src/research_agent/evaluation_budget.py": "8dadbc2aa6639e26d63dd3a55af5cb7248bfa23c2a29557e9d5b86711baa0adb",
+    "src/research_agent/evaluation_design.py": "ada31a174f12a6668f8cba56ff6654fafbfbc9260cc521882fd30df942192988",
+    "src/research_agent/generation.py": "1298b25f4b15c75bb9cc370a84e70bc09ed84d7e99dae04c01f741106e1055c1",
+    "src/research_agent/ingestion.py": "0506fe3d8b7bb667754bbb5ad8032e548229cdcf808e109b945f4aba44c3b2cf",
+    "src/research_agent/paper_metadata.py": "dd8d0a0552bd61e47c74ce107d8e5c98aad7f3f0e987af13497e3a73822c3bd0",
+    "src/research_agent/quality_metrics.py": "1535ece45fa4211d5d95ececd1a2cac6b9860ea871af698ccd7cb193572e74e7",
+    "src/research_agent/reranking.py": "55bb5979d534612c9ff87dc7ea970a0424811046d1bb1898c4429ba3bb62b7a0",
+    "src/research_agent/retrieval.py": "1a9307c580e1a9a880edd8149c8b20118017320ce40cc34d2206fecb0c631408",
+    "src/research_agent/service.py": "2ff5e696489b287f75a782eb3a490dff0277e3aa309652531113dc2619eed044",
+    "src/research_agent/settings.py": "ee79e29a9c8ba6dda9a72f39a8d86ba3304d894de01988688b01bfaa65b402de",
+    "src/research_agent/storage.py": "bc0b2af535fdbad809e576c293b4f7552f2f9e9cfa775a141dbbddb801e901a3",
+    "src/research_agent/vector_store.py": "a588841b3db68caa6f511ef965a12b6fef4199c1d6026992ed5436205a5fb92c"
+  },
+  "note": "Source at frozen generation run; package remains 0.3.2. RRF report precedes offline metric additions, so its aggregate source hash differs.",
+  "evaluation_scripts_sha256": {
+    "scripts/evaluate_generation_quality.py": "4426521d3ccdff627f6b1a82817076c87a957dadaf0c7ea45b424a25b64039f3",
+    "scripts/evaluate_rrf_grid.py": "f796caed440a7d614940ccc01f9dc8061b6ad690f3e6749f7a1e4215bddb8b0f",
+    "scripts/evaluate_verifier_challenges.py": "7bc2479a652e6c67553a18957d558a0a3553619f35e245a5d5d8c43b6d705c10",
+    "scripts/summarize_quality_intervals.py": "03a95e83d8dbd81895100d32dce307078e8d1a09edac06da3d1f2a02b29dc28a"
+  }
+}

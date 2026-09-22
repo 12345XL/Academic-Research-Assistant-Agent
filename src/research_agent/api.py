@@ -32,6 +32,9 @@ class RetrievalRequest(BaseModel):
     mode: Literal["bm25", "dense", "hybrid"] = "bm25"
     rerank: bool = Field(default=False, strict=True)
 
+    rrf_constant: int = Field(default=60, ge=1, le=1000, strict=True)
+    dense_weight: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False, strict=True)
+
     @field_validator("query", "paper_id")
     @classmethod
     def nonblank(cls, value: str) -> str:
@@ -40,11 +43,18 @@ class RetrievalRequest(BaseModel):
         return value.strip()
 
 
+class AnswerRequest(RetrievalRequest):
+    language: Literal["zh", "en"] = "zh"
+    profile: Literal["v1", "v2"] = "v1"
+
+
 def create_app(data_dir: Path | None = None, settings=None, generation_settings=None, model_client=None) -> FastAPI:
     # Explicit file or infrastructure settings stay independent of developer secrets.
     generation_settings = generation_settings or (GenerationSettings.from_env()
         if data_dir is None and settings is None else GenerationSettings())
-    answers = AnswerService(generation_settings, model_client)
+    answers = {p: AnswerService(generation_settings, model_client, profile=p) for p in ("v1", "v2")}
+    # One gate for both profiles, not one paid request per profile.
+    answers["v2"]._lock = answers["v1"]._lock
     directory = data_dir or Path(os.getenv("RESEARCH_DATA_DIR", "data/processed"))
     persistent = settings is not None or (data_dir is None and bool(os.getenv("DATABASE_URL")))
     # Explicit data_dir keeps P1 evaluation/tests independent of developer secrets.
@@ -231,7 +241,8 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     def retrieve(body: RetrievalRequest):
         try:
             if persistent:
-                return service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode, rerank=body.rerank)
+                return service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode, rerank=body.rerank,
+                                          rrf_constant=body.rrf_constant, dense_weight=body.dense_weight)
             if body.mode != "bm25" or body.rerank:
                 raise HTTPException(409, "向量、混合与重排检索需要 PostgreSQL 模式及相应模型/索引")
             return service().retrieve(body.query, body.paper_id, body.top_k)
@@ -241,11 +252,12 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
             raise HTTPException(422, str(exc)) from None
 
     @app.post("/api/v1/answer")
-    def answer(body: RetrievalRequest):
+    def answer(body: AnswerRequest):
         if not persistent and (body.mode != "bm25" or body.rerank):
             raise HTTPException(409, "向量、混合与重排检索需要 PostgreSQL 模式及相应模型/索引")
         try:
-            return answers.answer(service(), body.query, body.paper_id, body.top_k, body.mode, body.rerank)
+            return answers[body.profile].answer(service(), body.query, body.paper_id, body.top_k, body.mode, body.rerank,
+                                                language=body.language, rrf_constant=body.rrf_constant, dense_weight=body.dense_weight)
         except KeyError:
             raise HTTPException(404, "论文不存在") from None
         except ValueError:
