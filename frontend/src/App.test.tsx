@@ -26,6 +26,26 @@ function setupFetch(retrieve?: (options: RequestInit) => Promise<Response>) {
 afterEach(() => { cleanup(); window.localStorage.clear(); vi.unstubAllGlobals(); });
 
 describe('research session state', () => {
+  it('sends the selected retrieval mode and labels the returned RRF score', async () => {
+    let submitted: Record<string, unknown> = {};
+    setupFetch(options => {
+      submitted = JSON.parse(String(options.body));
+      return Promise.resolve(json({ ...evidence, trace: { latency_ms: 2, retriever: 'hybrid' },
+        citations: [{ ...evidence.citations[0], score: 0.032258 }] }));
+    });
+    render(<App />);
+    await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    fireEvent.change(screen.getByLabelText('检索方式'), { target: { value: 'hybrid' } });
+    fireEvent.change(screen.getByLabelText('输入检索问题'), { target: { value: 'method' } });
+    fireEvent.click(screen.getByRole('button', { name: '检索证据' }));
+    await screen.findByText(evidence.citations[0].text);
+    expect(submitted.mode).toBe('hybrid');
+    expect(screen.getByText('0.0323')).toBeTruthy();
+    expect(screen.getByText(/本次检索 · 混合 RRF/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('检索方式'), { target: { value: 'dense' } });
+    expect(screen.queryByText(evidence.citations[0].text)).toBeNull();
+  });
+
   it('clears previous evidence and the question when selecting another paper', async () => {
     setupFetch(); render(<App />);
     await screen.findByRole('heading', { level: 1, name: papers[0].title });

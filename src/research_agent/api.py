@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from . import __version__
 from .service import CorpusChangedError, CorpusIntegrityError, EvidenceService, PersistentEvidenceService
+from .embeddings import VectorUnavailableError
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -26,6 +27,7 @@ class RetrievalRequest(BaseModel):
     paper_id: str = Field(min_length=1, max_length=150)
     query: str = Field(min_length=1, max_length=2000)
     top_k: int = Field(default=5, ge=1, le=50)
+    mode: Literal["bm25", "dense", "hybrid"] = "bm25"
 
     @field_validator("query", "paper_id")
     @classmethod
@@ -61,7 +63,7 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
 
     app = FastAPI(
         title="科研论文助手Agent · 论文证据工作台", version=__version__, lifespan=lifespan,
-        description="指定论文内的原文证据检索。P2A 接入 PostgreSQL 与 S3；当前仅本机公共语料，无生成式回答。",
+        description="指定论文内的 BM25、向量与 RRF 原文证据检索；当前仅本机公共语料，无生成式回答。",
     )
 
     @app.exception_handler(CorpusChangedError)
@@ -71,6 +73,10 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
     @app.exception_handler(CorpusIntegrityError)
     async def invalid_corpus(request: Request, exc: CorpusIntegrityError):
         return JSONResponse(status_code=502, content={"detail": "论文证据校验失败，请检查数据并重新导入"})
+
+    @app.exception_handler(VectorUnavailableError)
+    async def vector_unavailable(request: Request, exc: VectorUnavailableError):
+        return JSONResponse(status_code=503, content={"detail": str(exc)})
 
     if persistent:
         import psycopg
@@ -96,9 +102,9 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
         if persistent:
             try:
                 counts = repository.summary()
-                return {"status": "ready", "stage": "P2A", "version": __version__, "papers": counts["papers"]}
+                return {"status": "ready", "stage": "P2B-1", "version": __version__, "papers": counts["papers"]}
             except Exception:
-                return {"status": "database_unavailable", "stage": "P2A", "version": __version__, "papers": 0}
+                return {"status": "database_unavailable", "stage": "P2B-1", "version": __version__, "papers": 0}
         evidence = app.state.evidence
         return {"status": "ready" if evidence else "data_missing", "stage": "P1",
                 "version": __version__, "papers": len(evidence.papers) if evidence else 0}
@@ -122,9 +128,16 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
             storage_status = storage_health.get("status", "unavailable")
         except Exception:
             storage_status = "unavailable"
-        return {"stage": "P2A", "mode": "postgres", "database": {"status": database_status},
+        from .vector_store import VectorStore
+        try:
+            vector_status = VectorStore(repository).status(repository.revision())
+        except Exception:
+            vector_status = {"state": "unavailable"}
+        return {"stage": "P2B-1", "mode": "postgres", "database": {"status": database_status},
                 "object_store": {"status": storage_status, "provider": "S3-compatible", "bucket": settings.s3_bucket},
-                "corpus": counts, "capabilities": {"generation": False, "pdf_upload": False}}
+                "corpus": counts, "vector_index": vector_status,
+                "capabilities": {"generation": False, "pdf_upload": False,
+                                 "hybrid_retrieval": vector_status["state"] == "ready"}}
 
     @app.get("/ready")
     def ready():
@@ -200,9 +213,15 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
     @app.post("/api/v1/retrieve")
     def retrieve(body: RetrievalRequest):
         try:
+            if persistent:
+                return service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode)
+            if body.mode != "bm25":
+                raise HTTPException(409, "向量与混合检索需要 PostgreSQL 模式和已发布索引")
             return service().retrieve(body.query, body.paper_id, body.top_k)
         except KeyError:
             raise HTTPException(404, "论文不存在") from None
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     return app
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .dataset import load_papers, load_paragraphs
-from .retrieval import BM25Index
+from .retrieval import BM25Index, reciprocal_rank_fusion
 
 
 class EvidenceService:
@@ -81,11 +81,64 @@ class PersistentEvidenceService:
     S3 is used for source downloads, not required to read committed paragraphs.
     """
 
-    def __init__(self, repository):
+    def __init__(self, repository, encoder=None, vector_store=None):
         self.repository = repository
         self._revision = None
         self._evidence = None
         self._lock = threading.RLock()
+        self._encoder = encoder
+        self._vector_store = vector_store
+
+    def _candidates(self, query, paper_id, top_k, mode, query_vector):
+        if paper_id not in self._evidence.papers:
+            raise KeyError(paper_id)
+        if mode == "bm25":
+            return self._evidence.retrieve(query, paper_id, top_k)
+        from .embeddings import LocalEncoder, CONFIG, VectorUnavailableError, collection_id
+        from .vector_store import VectorStore
+        self._vector_store = self._vector_store or VectorStore(self.repository)
+        if self._vector_store.status(self._revision).get("state") != "ready":
+            raise VectorUnavailableError("当前语料的向量索引未就绪，请完成索引构建")
+        self._encoder = self._encoder or LocalEncoder()
+        pool = max(20, top_k)
+        if mode == "hybrid":
+            result = self._evidence.retrieve(query, paper_id, pool)
+        else:
+            result = {"trace_id": uuid.uuid4().hex, "mode": "evidence_only", "scope": "specified_paper",
+                      "query": query, "paper_id": paper_id, "citations": [],
+                      "trace": {"k1": self._evidence.index.k1, "b": self._evidence.index.b,
+                                "corpus_paragraphs": self._evidence.index.n,
+                                "paper_paragraphs": len(self._evidence.index.paper_chunks.get(paper_id, set())),
+                                "latency_ms": 0}}
+        vector_started = time.perf_counter()
+        vector = query_vector if query_vector is not None else self._encoder.encode_queries([query])[0]
+        vector_hits = self._vector_store.search(vector, paper_id, self._revision, pool)
+        vector_latency = (time.perf_counter() - vector_started) * 1000
+        bm25 = {item["chunk_id"]: item for item in result["citations"]}
+        dense = {item["chunk_id"]: item for item in vector_hits}
+        for item in vector_hits:
+            cached = self._evidence.index.paragraphs.get(item["chunk_id"])
+            if cached is None or cached["paper_id"] != paper_id or cached["text_sha256"] != item["text_sha256"]:
+                raise CorpusIntegrityError("向量候选与当前证据不一致")
+        ranked = (reciprocal_rank_fusion([list(bm25), list(dense)], top_k)
+                  if mode == "hybrid" else [(r["chunk_id"], r["score"]) for r in vector_hits[:top_k]])
+        citations = []
+        for rank, (chunk_id, score) in enumerate(ranked, 1):
+            paragraph = self._evidence.index.paragraphs[chunk_id]
+            citations.append({**{field: paragraph[field] for field in (
+                "chunk_id", "paper_id", "title", "section_name", "section_index", "paragraph_index",
+                "text", "text_sha256", "source", "version")}, "rank": rank, "score": round(score, 8),
+                "retrieval_scores": {"bm25": bm25.get(chunk_id, {}).get("score") if mode == "hybrid" else None,
+                                     "cosine": dense.get(chunk_id, {}).get("score")}})
+        result.update(top_k=top_k, citations=citations, status="evidence_found" if citations else "no_evidence",
+                      notice="仅返回检索原文；相似度或融合分数不是置信度，尚未生成或验证答案。")
+        result["trace"].update(retriever=mode, candidate_pool=pool, rrf_constant=60 if mode == "hybrid" else None,
+                               vector_collection=collection_id(self._revision), embedding=CONFIG,
+                               vector_latency_ms=round(vector_latency, 3), model_calls=0 if query_vector is not None else 1,
+                               query_embedding_precomputed=query_vector is not None, returned=len(citations),
+                               score_kind="rrf" if mode == "hybrid" else "cosine",
+                               bm25_candidates=len(bm25) if mode == "hybrid" else 0, dense_candidates=len(dense))
+        return result
 
     def _ensure_snapshot(self):
         revision = self.repository.revision()
@@ -94,12 +147,16 @@ class PersistentEvidenceService:
             self._evidence = EvidenceService.from_records(papers, paragraphs)
             self._revision = actual_revision
 
-    def retrieve(self, query: str, paper_id: str, top_k: int = 5) -> dict[str, Any]:
+    def retrieve(self, query: str, paper_id: str, top_k: int = 5, mode: str = "bm25", *, query_vector=None) -> dict[str, Any]:
+        if mode not in {"bm25", "dense", "hybrid"}:
+            raise ValueError("Unknown retrieval mode")
+        if not 1 <= top_k <= 50 or not query.strip():
+            raise ValueError("Invalid query or top_k")
         started = time.perf_counter()
         with self._lock:
             for _ in range(2):
                 self._ensure_snapshot()
-                result = self._evidence.retrieve(query, paper_id, top_k)
+                result = self._candidates(query, paper_id, top_k, mode, query_vector)
                 citations = result["citations"]
                 facts = self.repository.get_chunks([item["chunk_id"] for item in citations], paper_id)
                 if any(

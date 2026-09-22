@@ -23,6 +23,18 @@ class Hit:
     score: float
 
 
+def reciprocal_rank_fusion(rankings: list[list[str]], top_k: int, constant: int = 60) -> list[tuple[str, float]]:
+    """Equal-weight rank fusion; duplicate IDs never contribute twice per list."""
+    if constant < 1 or top_k < 1:
+        raise ValueError("RRF constant and top_k must be positive")
+    scores: dict[str, float] = defaultdict(float)
+    for ranking in rankings:
+        unique = list(dict.fromkeys(ranking))
+        for rank, chunk_id in enumerate(unique, 1):
+            scores[chunk_id] += 1.0 / (constant + rank)
+    return sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:top_k]
+
+
 class BM25Index:
     def __init__(self, paragraphs: list[dict[str, Any]], k1: float = 1.5, b: float = 0.75):
         if k1 <= 0 or not 0 <= b <= 1:

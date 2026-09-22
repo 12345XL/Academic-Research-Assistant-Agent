@@ -1,0 +1,22 @@
+{
+  "outcome": "built",
+  "collection_id": "20c446bdba21b6d7ca95f989d08743354b9d46ccb751e44bd5f7c0c23c80c1d3",
+  "corpus_revision": 1,
+  "paragraphs": 61317,
+  "windows": 61467,
+  "resumed_paragraphs": 0,
+  "elapsed_seconds": 453.02,
+  "config": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "dimensions": 384,
+    "pooling": "normalized-cls",
+    "max_tokens": 512,
+    "window_tokens": 510,
+    "overlap_tokens": 64,
+    "paragraph_aggregation": "max-cosine",
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "preprocessing_version": 1
+  },
+  "device": "mps"
+}

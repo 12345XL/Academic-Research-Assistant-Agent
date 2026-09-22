@@ -53,6 +53,8 @@ def test_input_and_missing_data_errors(tmp_path):
     with TestClient(create_app(tmp_path)) as client:
         assert client.get("/api/v1/papers/missing").status_code == 404
         assert client.post("/api/v1/retrieve", json={"paper_id": "missing", "query": "x"}).status_code == 404
+        assert client.post("/api/v1/retrieve", json={"paper_id": "p1", "query": "x", "mode": "dense"}).status_code == 409
+        assert client.post("/api/v1/retrieve", json={"paper_id": "p1", "query": "x", "mode": "unknown"}).status_code == 422
         for payload in [{"paper_id": "p1", "query": "  "}, {"paper_id": "  ", "query": "x"},
                         {"paper_id": "p1", "query": "x", "top_k": 51}]:
             assert client.post("/api/v1/retrieve", json=payload).status_code == 422
