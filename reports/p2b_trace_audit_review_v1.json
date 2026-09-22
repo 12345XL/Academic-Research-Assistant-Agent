@@ -1,0 +1,2152 @@
+{
+  "protocol": "trace-audit-v1",
+  "review_source": "model_assisted_staged_review",
+  "independent_human_review": "pending",
+  "new_paid_model_calls": 0,
+  "source_manifest_sha256": "8ecbcf23426959117b48a4dd5b7d0dd4b6c58c594a81320b9436dfa9b9f6353b",
+  "pre_reveal_review_sha256": {
+    "a": "d3e3e15604b6e600c58faee9e143954611fffe67e3e2fd3f24dc2c1c8a7891cf",
+    "b": "9da43c0661b218e1edffeac3a566fbc0f3b09609cd11ffacf59713d2baeebe42"
+  },
+  "post_reveal_review_sha256": "a3b8bcc18c2494ca9efe9364075a6e2aa2041d7fe5e68e3d84d3b4b847fc3fb3",
+  "question_count": 24,
+  "output_count": 48,
+  "selection_warning": "Failure-enriched exposed development sample; no population quality estimate or causal v1/v2 comparison.",
+  "label_policy": "Pre-reveal judgments are primary. Explicit post-reveal amendments are separate sensitivity counts; neither is human ground truth.",
+  "quoted_spans_rechecked": 108,
+  "summary_before_reveal": {
+    "context_sufficiency": {
+      "insufficient": 10,
+      "sufficient": 9,
+      "ambiguous": 5
+    },
+    "actual_statuses": {
+      "v1": {
+        "verification_failed": 2,
+        "answered": 18,
+        "evidence_insufficient": 4
+      },
+      "v2": {
+        "evidence_insufficient": 8,
+        "answered": 13,
+        "verification_failed": 3
+      },
+      "all": {
+        "evidence_insufficient": 12,
+        "verification_failed": 5,
+        "answered": 31
+      }
+    },
+    "semantic_gate_decisions": {
+      "v1": {
+        "unacceptable_blocked": 2,
+        "acceptable_published": 8,
+        "unacceptable_published": 3,
+        "uncertain_published": 7
+      },
+      "v2": {
+        "acceptable_published": 8,
+        "unacceptable_published": 4,
+        "uncertain_published": 1,
+        "unacceptable_blocked": 1,
+        "uncertain_blocked": 2
+      },
+      "all": {
+        "unacceptable_blocked": 3,
+        "acceptable_published": 16,
+        "unacceptable_published": 7,
+        "uncertain_published": 8,
+        "uncertain_blocked": 2
+      }
+    },
+    "generator_abstentions_by_context": {
+      "v1": {
+        "insufficient": 4
+      },
+      "v2": {
+        "insufficient": 6,
+        "ambiguous": 2
+      },
+      "all": {
+        "insufficient": 10,
+        "ambiguous": 2
+      }
+    }
+  },
+  "summary_with_explicit_amendments": {
+    "context_sufficiency": {
+      "insufficient": 10,
+      "sufficient": 8,
+      "ambiguous": 6
+    },
+    "actual_statuses": {
+      "v1": {
+        "verification_failed": 2,
+        "answered": 18,
+        "evidence_insufficient": 4
+      },
+      "v2": {
+        "evidence_insufficient": 8,
+        "answered": 13,
+        "verification_failed": 3
+      },
+      "all": {
+        "evidence_insufficient": 12,
+        "verification_failed": 5,
+        "answered": 31
+      }
+    },
+    "semantic_gate_decisions": {
+      "v1": {
+        "unacceptable_blocked": 2,
+        "acceptable_published": 7,
+        "unacceptable_published": 3,
+        "uncertain_published": 8
+      },
+      "v2": {
+        "acceptable_published": 7,
+        "unacceptable_published": 4,
+        "uncertain_published": 2,
+        "unacceptable_blocked": 1,
+        "uncertain_blocked": 2
+      },
+      "all": {
+        "unacceptable_blocked": 3,
+        "acceptable_published": 14,
+        "unacceptable_published": 7,
+        "uncertain_published": 10,
+        "uncertain_blocked": 2
+      }
+    },
+    "generator_abstentions_by_context": {
+      "v1": {
+        "insufficient": 4
+      },
+      "v2": {
+        "insufficient": 6,
+        "ambiguous": 2
+      },
+      "all": {
+        "insufficient": 10,
+        "ambiguous": 2
+      }
+    }
+  },
+  "offline_no_semantic_gate": {
+    "published_if_only_hard_citation_check_retained": 36,
+    "actual_published": 31,
+    "additional_unacceptable_publications_by_pre_reveal_model_review": 3,
+    "additional_uncertain_publications": 2,
+    "additional_acceptable_publications": 0,
+    "limitation": "Decision-only counterfactual on existing drafts, not a rerun or deployment; corpus version/security checks still required."
+  },
+  "cases": [
+    {
+      "question_id": "7e161d9facd100544fa339b06f656eb2fc64ed28",
+      "paper_id": "2001.00137",
+      "bucket": "verification_blocked",
+      "audit_id": "T01",
+      "pool": "train_regression",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T01",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "正文描述结构和维度，但没有给 vanilla transformer 层数；不能由 BERT 名称或768维推定层数。",
+        "evidence_ids": [
+          "2001.00137:s1:p1",
+          "2001.00137:s1:p2"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "没有层数，弃答合理。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "verification_failed",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "failed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "五条架构事实重复相关话题，却没有回答多少层。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T01",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_target",
+          "status_scoring"
+        ],
+        "note": "旧版架构描述有出处但没有层数，被核验拦下；新版在生成阶段弃答。两版均未发布，F1却由0到1，反映状态记分差异，不能算核验改善。",
+        "evidence_ids": [
+          "2001.00137:s1:p1"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "52ed2eb6f4d1f74ebdc4dcddcae201786d4c0463",
+      "paper_id": "1909.04181",
+      "bucket": "changed",
+      "audit_id": "T02",
+      "pool": "train_regression",
+      "dataset_label": "boolean",
+      "stage_a": {
+        "audit_id": "T02",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "明确指定GRU为baseline，且列出BERT相对GRU提升，足以回答是否比较。",
+        "evidence_ids": [
+          "1909.04181:s2:p0",
+          "1909.04181:s4:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "Yes由明确baseline和比较结果支撑。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "虽然较长，明确说明baseline和比较，实际回答了是非问题。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T02",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "answer_format"
+        ],
+        "note": "两版在解盲前均被判可发布；旧版明确说明基线比较，新版简答Yes，F1从0到1。没有新核验救回，支持格式影响而非可信度跃升。",
+        "evidence_ids": [
+          "1909.04181:s2:p0",
+          "1909.04181:s4:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 13,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1909.04181:s3:p0",
+          "candidate_position": 5,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "777bb3dcdbc32e925df0f7ec3adb96f15dd3dc47",
+      "paper_id": "1908.08717",
+      "bucket": "both_published_control",
+      "audit_id": "T03",
+      "pool": "dev_comparison",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T03",
+        "context_sufficiency": "insufficient",
+        "confidence": "medium",
+        "reason": "上下文说明女性不足的方向，但没有失衡程度、比例或人数；how big若要求程度，不能仅用定性趋势充当量化回答。",
+        "evidence_ids": [
+          "1908.08717:abstract",
+          "1908.08717:s15:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.25,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "定性说女性不足，没有说明失衡大小或缺少量化信息。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0821917808219178,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "额外背景均有依据，但同样没有给程度。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T03",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "retrieval_coverage",
+          "question_target"
+        ],
+        "note": "失衡比例所在段落未进入候选20或上下文5；两版发布的定性描述没有回答程度。段落同时含女性人数比例和发言时长比例，不能把其中一个数字当唯一合理完整答案。",
+        "evidence_ids": [
+          "1908.08717:s8:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1908.08717:s8:p0",
+          "candidate_position": null,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "43f86cd8aafe930ebb35ca919ada33b74b36c7dd",
+      "paper_id": "1909.02635",
+      "bucket": "both_published_control",
+      "audit_id": "T04",
+      "pool": "train_regression",
+      "dataset_label": "abstractive",
+      "stage_a": {
+        "audit_id": "T04",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "实体置前/置后、START/SEP及句末CLS排列均有直接说明，足以描述重构方式。",
+        "evidence_ids": [
+          "1909.02635:s6:p1"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.15841584158415842,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "核心重构细节完整；性能附加句冗余但无实质不实。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.058823529411764705,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "实体置前和置后两种方式简明且保留特殊标记。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T04",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "context_coverage",
+          "reviewer_uncertainty"
+        ],
+        "note": "额外原文明确还存在句子级/文档级这个变化维度；该段在候选第7位却不在上下文。此前只看实体置前/置后便认定完整过于确定。追加修正为上下文范围含糊、两版完整性/可发布性不确定；保留原审阅记录，不借gold静默改分。",
+        "evidence_ids": [
+          "1909.02635:s6:p1",
+          "1909.02635:s7:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": [
+          {
+            "target": "context_sufficiency",
+            "before": "sufficient",
+            "after": "ambiguous",
+            "reason": "额外原文显示还有句子/文档层级变化；问题是否要求覆盖两个变化维度不明确。"
+          },
+          {
+            "target": "both_arms.publishable",
+            "before": "yes",
+            "after": "uncertain",
+            "reason": "实体位置解释可用，但不能确定是否满足整个重构范围；不能直接改成错误。"
+          }
+        ]
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1909.02635:s6:p1",
+          "candidate_position": 6,
+          "in_actual_context": true
+        },
+        {
+          "chunk_id": "1909.02635:s7:p0",
+          "candidate_position": 7,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "68cd8433a75eee7d100dbbfedebbf53873a21720",
+      "paper_id": "1901.10133",
+      "bucket": "answerable_generator_abstained",
+      "audit_id": "T05",
+      "pool": "dev_comparison",
+      "dataset_label": "boolean",
+      "stage_a": {
+        "audit_id": "T05",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "构建实验文档集不等于发布数据集，没有发布声明或明确不发布声明。",
+        "evidence_ids": [
+          "1901.10133:s4:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "构建语料不证明发布，弃答合理。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "证据没有发布结论，弃答合理。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T05",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "negative_evidence_policy",
+          "annotation_scope"
+        ],
+        "note": "数据集标签为No，提供的证据是实验语料构建，未证明没有发布。两版弃答在已见上下文中可辩护；未核验完整PDF及外部发布渠道，不能宣称标签错误或把弃答判为误拒。",
+        "evidence_ids": [
+          "1901.10133:s4:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 16,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1901.10133:s4:p0",
+          "candidate_position": 1,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "cb6a8c642575d3577d1840ca2f4cd2cc2c3397c5",
+      "paper_id": "1804.07789",
+      "bucket": "changed",
+      "audit_id": "T06",
+      "pool": "dev_comparison",
+      "dataset_label": "boolean",
+      "stage_a": {
+        "audit_id": "T06",
+        "context_sufficiency": "sufficient",
+        "confidence": "medium",
+        "reason": "以300维GloVe初始化词嵌入，通常支持使用预训练嵌入；正文未详述GloVe来源，需保留该限定。",
+        "evidence_ids": [
+          "1804.07789:s8:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "初始化使用GloVe直接说明方法，虽未写Yes但不是未回答。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "按通常GloVe初始化解释为预训练嵌入，来源未细述，保留中等确信。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T06",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "answer_format"
+        ],
+        "note": "两版都说GloVe初始化并被预先判为可答，新版增加简答Yes使F1从0到1。领域术语推断的确信度仅中等，待独立人工复核。",
+        "evidence_ids": [
+          "1804.07789:s8:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1804.07789:s8:p0",
+          "candidate_position": 1,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "ddb23a71113cbc092cbc158066d891cae261e2c6",
+      "paper_id": "1707.06806",
+      "bucket": "changed",
+      "audit_id": "T07",
+      "pool": "dev_comparison",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T07",
+        "context_sufficiency": "sufficient",
+        "confidence": "medium",
+        "reason": "段落列出Yahoo News、Guardian、Washington Post等发行方，足以给文章来源例子；不应外推为穷尽全部数据集来源。",
+        "evidence_ids": [
+          "1707.06806:s9:p2"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.8148148148148148,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "保留such as范围，正确给文章来源示例。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.43137254901960786,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "同一有效核心答案，时间/下载规模额外但有据。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T07",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "answer_format",
+          "alternative_reference"
+        ],
+        "note": "发行方例子和数据集名称来自不同参考答案；上下文足以给发行方例子，两版均保留相应范围。F1提高不等于补回遗漏证据。",
+        "evidence_ids": [
+          "1707.06806:s9:p2",
+          "1707.06806:s9:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1707.06806:s9:p0",
+          "candidate_position": 4,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1707.06806:s9:p2",
+          "candidate_position": 1,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "c9b8d3858c112859eabee54248b874331c48f71b",
+      "paper_id": "1809.01541",
+      "bucket": "unanswerable_published",
+      "audit_id": "T08",
+      "pool": "dev_comparison",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T08",
+        "context_sufficiency": "ambiguous",
+        "confidence": "medium",
+        "reason": "可回答形态屈折在上下文中的任务类型，但如果type要求时态/数/格等具体语言学类别，现有段落没有完整说明。",
+        "evidence_ids": [
+          "1809.01541:abstract",
+          "1809.01541:s0:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "uncertain",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "若type指任务形式则充分，若指语言学屈折类别则不充分。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "uncertain",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "同样受问题含义影响；多句重复并不消除歧义。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T08",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_ambiguity",
+          "annotation_scope"
+        ],
+        "note": "数据集不可答；问题的type可以指任务形式也可以指具体语言学类别。两版支持前一种解读，但后一种信息不足；维持不确定，不把两次发布直接当作事实幻觉。",
+        "evidence_ids": [
+          "1809.01541:s0:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "891c4af5bb77d6b8635ec4109572de3401b60631",
+      "paper_id": "1911.03648",
+      "bucket": "verification_blocked",
+      "audit_id": "T09",
+      "pool": "train_tuning",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T09",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "VLSP是共享任务/数据集提供者；证据仅称社交网络评论，没有命名具体社交平台。",
+        "evidence_ids": [
+          "1911.03648:s6:p0",
+          "1911.03648:s10:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "verification_failed",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "failed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "任务/组织名替代社交平台名，答非所问。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "证据没有平台名称，弃答合理。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T09",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_target",
+          "status_scoring"
+        ],
+        "note": "旧版用共享任务来源替代社交平台，核验正确拦截；新版直接弃答。两版均不发布却F1不同，不能据此认定新核验更有效。",
+        "evidence_ids": [
+          "1911.03648:s6:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "6b2fbc1c083491a774233f9edf8f76bd879418df",
+      "paper_id": "1606.08495",
+      "bucket": "unanswerable_published",
+      "audit_id": "T10",
+      "pool": "train_tuning",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T10",
+        "context_sufficiency": "ambiguous",
+        "confidence": "medium",
+        "reason": "可给典型大规模运行数百节点的量级，但没有本次实际实验集群的精确节点数；应明确typical限定。",
+        "evidence_ids": [
+          "1606.08495:s6:p16"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "若用户要求实际集群精确数，弃答可辩护；若接受典型量级则过严，待澄清。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "uncertain",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "保留typical和few hundred，没有伪造精确数；实际集群语义仍未明确。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T10",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_ambiguity",
+          "bounded_answer"
+        ],
+        "note": "原文只给典型运行量级，旧版保留典型限定；新版拒绝精确作答。数据集不可答标签不能自动裁定哪种产品行为更有用，仍需明确是否接受有界回答。",
+        "evidence_ids": [
+          "1606.08495:s6:p16"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "2a1069ae3629ae8ecc19d2305f23445c0231dc39",
+      "paper_id": "1707.06878",
+      "bucket": "verification_blocked",
+      "audit_id": "T11",
+      "pool": "train_regression",
+      "dataset_label": "boolean",
+      "stage_a": {
+        "audit_id": "T11",
+        "context_sufficiency": "insufficient",
+        "confidence": "medium",
+        "reason": "描述图聚类、稀疏特征和词向量，不足以对整个系统是否使用神经模型下全局Yes/No判断。",
+        "evidence_ids": [
+          "1707.06878:s3:p0",
+          "1707.06878:s9:p1"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.02666666666666667,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "无监督和图方法的介绍不能替代是否使用神经模型的结论。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "verification_failed",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "failed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "no",
+            "direct": "yes",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "No缺乏依据，无监督/knowledge-free不蕴含非神经。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T11",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_target",
+          "unsupported_inference"
+        ],
+        "note": "无监督不蕴含非神经，旧版相关介绍未回答是非，新版No的自身引用也不足。其他gold段落在候选但未入上下文，解释了局部信息缺失，不能追认当前引用支持No；新版拦截与预先审阅一致。",
+        "evidence_ids": [
+          "1707.06878:s3:p0",
+          "1707.06878:s3:p1",
+          "1707.06878:s3:p2",
+          "1707.06878:s3:p3"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1707.06878:s3:p0",
+          "candidate_position": 2,
+          "in_actual_context": true
+        },
+        {
+          "chunk_id": "1707.06878:s3:p1",
+          "candidate_position": 16,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1707.06878:s3:p2",
+          "candidate_position": 12,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1707.06878:s3:p3",
+          "candidate_position": 6,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "206739417251064b910ae9e5ff096e867ee10fb8",
+      "paper_id": "1601.02403",
+      "bucket": "unanswerable_published",
+      "audit_id": "T12",
+      "pool": "dev_comparison",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T12",
+        "context_sufficiency": "ambiguous",
+        "confidence": "medium",
+        "reason": "有隐式claim占48%的具体现象，可以给有界例子；没有全部现象清单，不能用模型名称替代所问现象。",
+        "evidence_ids": [
+          "1601.02403:s14:p52"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "复述研究目的，未列出现象。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "包含隐式claim与少量重述两个具体现象，比A有信息；是否覆盖题意仍待全文核对。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T12",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_target",
+          "partial_answer_policy"
+        ],
+        "note": "新版用研究目的代替所问现象；旧版另举了隐式论点等现象，是否满足题目范围仍不确定。数据集不可答且两版F1都为0，但它们的信息价值不同。",
+        "evidence_ids": [
+          "1601.02403:s14:p52"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "3f3c09c1fd542c1d9acf197957c66b79ea1baf6e",
+      "paper_id": "1911.13087",
+      "bucket": "answerable_generator_abstained",
+      "audit_id": "T13",
+      "pool": "train_regression",
+      "dataset_label": "abstractive",
+      "stage_a": {
+        "audit_id": "T13",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "给出句子数和语料构建，没有标注人员数量；不能把句子或说话人数当annotator数。",
+        "evidence_ids": [
+          "1911.13087:s7:p0",
+          "1911.13087:s2:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "证据未给annotator数量，合理弃答。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "证据未给annotator数量，合理弃答。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T13",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "annotation_entity_mismatch",
+          "context_gold_loss"
+        ],
+        "note": "gold段落在候选第4位却未入上下文，但原文只明确一名朗读者，没有明确一名标注者。不能把找回该段的Hit提升当作可回答性改善。此前候选损失线索保留，因果归因改为实体定义待核实。",
+        "evidence_ids": [
+          "1911.13087:s8:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1911.13087:s8:p0",
+          "candidate_position": 4,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "c34a15f1d113083da431e4157aceb11266e9a1b2",
+      "paper_id": "1911.03705",
+      "bucket": "verification_blocked",
+      "audit_id": "T14",
+      "pool": "train_tuning",
+      "dataset_label": "boolean",
+      "stage_a": {
+        "audit_id": "T14",
+        "context_sufficiency": "sufficient",
+        "confidence": "medium",
+        "reason": "任务是根据概念生成场景句；人工提供rationales，扩展模型将其作为输入。支持按已描述任务回答不要求另生成rationale，但不是所有未来模型的否定。",
+        "evidence_ids": [
+          "1911.03705:s0:p2",
+          "1911.03705:s4:p1",
+          "1911.03705:s10:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "verification_failed",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "failed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "uncertain",
+            "direct": "yes",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "所引仅证明人写rationale，未单独证明模型不生成；全上下文的任务定义有支持，但引用关联不充分，需人工裁决。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "说明rationale的来源和输入作用，但没有明确模型是否需要生成；可读者推断，却未直接回答。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T14",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "citation_selection",
+          "negative_evidence_policy"
+        ],
+        "note": "任务定义及rationale作为输入的段落已在上下文，新版却没有引用，核验器因只见所引段落并未看到它。可能是选引丢失，也可能是No推断确实过强；不能直接判核验误杀。",
+        "evidence_ids": [
+          "1911.03705:s10:p0",
+          "1911.03705:s4:p1"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1911.03705:s10:p0",
+          "candidate_position": 1,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "3a1bd3ec1a7ce9514da0cb2dfcaa454ba8c0ed14",
+      "paper_id": "1704.06125",
+      "bucket": "answerable_generator_abstained",
+      "audit_id": "T15",
+      "pool": "train_regression",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T15",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "只有A-E标号、部分输出维度和任务大类，没有逐项五个子任务的定义，不能凭领域常识补齐。",
+        "evidence_ids": [
+          "1704.06125:s8:p0",
+          "1704.06125:s0:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "缺少五个子任务定义，合理弃答。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "只有标号和维数，合理弃答。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T15",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "annotation_granularity",
+          "partial_answer_policy"
+        ],
+        "note": "题目问五个子任务，参考只列三种任务大类并指向外部文献；参考段落已在上下文。两版拒绝编出五项合理，是否允许只答三类取决于部分回答政策。",
+        "evidence_ids": [
+          "1704.06125:s0:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1704.06125:s0:p0",
+          "candidate_position": 10,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "26c64edbc5fa4cdded69ace66fdba64a9648b78e",
+      "paper_id": "2002.00750",
+      "bucket": "unanswerable_published",
+      "audit_id": "T16",
+      "pool": "train_regression",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T16",
+        "context_sufficiency": "ambiguous",
+        "confidence": "medium",
+        "reason": "有10881训练话语及报告改进，可给这个实验使用量；没有规模扫描，不能声称这是最小充分门槛或所有指标均超越。",
+        "evidence_ids": [
+          "2002.00750:s8:p0",
+          "2002.00750:s9:p0"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "uncertain",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "给出了10881实验训练量，但未区分使用量和最低需求；还将作者推测的收敛原因写得更确定。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "no",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "只用small amounts重复摘要，没有给上下文已提供的训练规模或说明门槛未知。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T16",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "quantity_scope",
+          "question_target"
+        ],
+        "note": "实验使用规模不证明最小充分门槛；旧版给数量但限定不充分，维持不确定。新版只有少量数据的概括，连已有实验量也没给，预先判为未回答；两版仍均放行。",
+        "evidence_ids": [
+          "2002.00750:s8:p0",
+          "2002.00750:s9:p0"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "4bf4374135c39d10dafece4bed8ef547dc3bf9f0",
+      "paper_id": "1808.04614",
+      "bucket": "unanswerable_published",
+      "audit_id": "T17",
+      "pool": "train_regression",
+      "dataset_label": "unanswerable",
+      "stage_a": {
+        "audit_id": "T17",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "通过多层provenance函数对应的单元格高亮进行图形解释，问题所需机制可从s8和摘要得到。",
+        "evidence_ids": [
+          "1808.04614:s8:p0",
+          "1808.04614:abstract"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "清楚说明基于provenance高亮单元格，未把NL生成机制当图形机制。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "简洁且关键机制完整。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T17",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "annotation_scope",
+          "question_granularity"
+        ],
+        "note": "数据集不可答，但原文说明按provenance函数高亮单元格，两版解盲前均被判可给高层机制解释。若问题要求完整算法或公式则仍不够；当前属于标注粒度分歧，未证明gold错误。",
+        "evidence_ids": [
+          "1808.04614:s8:p0",
+          "1808.04614:abstract"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "3ee721c3531bf1b9a1356a40205d088c9a7a44fc",
+      "paper_id": "1909.05855",
+      "bucket": "both_published_control",
+      "audit_id": "T18",
+      "pool": "train_tuning",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T18",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "明确先模拟服务生成对话大纲，再众包改写为自然语言，并保留模拟器标注。",
+        "evidence_ids": [
+          "1909.05855:s2:p1",
+          "1909.05855:s5:p2"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.16260162601626016,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "有模拟器与众包两步，slot值和标注说明有据；冗余但主要内容正确。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.25,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "保留采集两步和标注继承，简洁完整。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T18",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "alternative_evidence",
+          "answer_format"
+        ],
+        "note": "实际上下文直接支持模拟器生成大纲后众包改写，正文证据不必与某一个参考段落相同。两版均可发布，简短表达提高F1，不代表新增事实正确性。",
+        "evidence_ids": [
+          "1909.05855:s2:p1",
+          "1909.05855:s5:p2"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1909.05855:s1:p2",
+          "candidate_position": null,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1909.05855:s20:p0",
+          "candidate_position": 3,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "4a4b7c0d3e7365440b49e9e6b67908ea5cea687d",
+      "paper_id": "1909.00161",
+      "bucket": "verification_blocked",
+      "audit_id": "T19",
+      "pool": "train_regression",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T19",
+        "context_sufficiency": "insufficient",
+        "confidence": "medium",
+        "reason": "有Majority/Word2Vec/ESA及Binary-BERT的比较线索，但列表在following baseline处中断；不能称已拿到完整基线集。",
+        "evidence_ids": [
+          "1909.00161:s24:p0",
+          "1909.00161:s21:p0",
+          "1909.00161:s23:p2"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "verification_failed",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "failed"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "四个名称能找到依据，但跨设置合并且未说明仅有这些证据，完整清单未能确认。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.17777777777777778,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "区分两种设置更好，但仍不知道是否完整，不能凭gold前判错。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T19",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "scope_ambiguity",
+          "possible_overblocking"
+        ],
+        "note": "gold列部分标签未见设置的四种基线，实际跨设置的替代段落也支持这些名称；全文另有完全未见设置的Wikipedia基线。完整范围不明确，新版被拦可能过严，也可能阻止了不完整清单，维持不确定。",
+        "evidence_ids": [
+          "1909.00161:s22:p0",
+          "1909.00161:s22:p1",
+          "1909.00161:s22:p3",
+          "1909.00161:s22:p4",
+          "1909.00161:s24:p1"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1909.00161:s22:p0",
+          "candidate_position": null,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1909.00161:s22:p1",
+          "candidate_position": null,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1909.00161:s22:p2",
+          "candidate_position": null,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1909.00161:s22:p3",
+          "candidate_position": null,
+          "in_actual_context": false
+        },
+        {
+          "chunk_id": "1909.00161:s22:p4",
+          "candidate_position": null,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "07c59824f5e7c5399d15491da3543905cfa5f751",
+      "paper_id": "1910.12618",
+      "bucket": "both_published_control",
+      "audit_id": "T20",
+      "pool": "train_tuning",
+      "dataset_label": "abstractive",
+      "stage_a": {
+        "audit_id": "T20",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "明确原训练切分天数，但缺测试规模且最终训练合并验证集；不足以完整回答train/test大小。",
+        "evidence_ids": [
+          "1910.12618:s7:p1",
+          "1910.12618:s7:p4"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.42857142857142855,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "只答原训练切分，遗漏所问测试量且不说明未知；不宜作为完整回答。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.23529411764705882,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "no",
+            "publishable": "no",
+            "reason": "补充重训练仍没有测试量或显式局限，完整问答未完成。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T20",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "context_structure",
+          "question_completeness",
+          "annotation_scope"
+        ],
+        "note": "两版只答初始训练量，未答测试量或说明缺失。gold是总语料量，候选第19位但未入上下文；真正测试切分在训练段落相邻的s7:p3且不在候选20。找回gold总量或仅调重排均不等于补齐train/test。",
+        "evidence_ids": [
+          "1910.12618:s3:p0",
+          "1910.12618:s7:p1",
+          "1910.12618:s7:p2",
+          "1910.12618:s7:p3"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1910.12618:s3:p0",
+          "candidate_position": 19,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "479fc9e6d6d80e69f425d9e82e618e6b7cd12764",
+      "paper_id": "1806.04535",
+      "bucket": "changed",
+      "audit_id": "T21",
+      "pool": "train_regression",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T21",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "直接列出intra-sentential和intra-word两类，多个段落一致。",
+        "evidence_ids": [
+          "1806.04535:s4:p1",
+          "1806.04535:abstract"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.6666666666666666,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "两类完整明确。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.057971014492753624,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "两类完整，额外解释和数目有据。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T21",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "source_terminology",
+          "answer_format"
+        ],
+        "note": "参考引言写intra-sequential，实际上下文的摘要及正文写intra-sentential。两种术语差异来自原文不同位置，不应直接归咎生成或标注笔误；两版均回答两类，F1增益主要线索是简化表达。",
+        "evidence_ids": [
+          "1806.04535:s0:p2",
+          "1806.04535:s4:p1",
+          "1806.04535:abstract"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1806.04535:s0:p2",
+          "candidate_position": 10,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "0da6cfbc8cb134dc3d247e91262f5050a2200664",
+      "paper_id": "1811.02906",
+      "bucket": "answerable_generator_abstained",
+      "audit_id": "T22",
+      "pool": "train_tuning",
+      "dataset_label": "abstractive",
+      "stage_a": {
+        "audit_id": "T22",
+        "context_sufficiency": "ambiguous",
+        "confidence": "medium",
+        "reason": "存在tweet预训练主题与用户ID主题两种LDA；用户聚类有政治人物/音乐/媒体/体育例子，但tweet主题没有名称，需明确对象。",
+        "evidence_ids": [
+          "1811.02906:s3:p6",
+          "1811.02906:s6:p3"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.27906976744186046,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "partial",
+            "complete": "uncertain",
+            "publishable": "uncertain",
+            "reason": "区分两种LDA并给用户主题实例；对tweet主题名仍未回答，受问题指代影响。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "若指tweet主题名则合理；若指用户主题聚类则过严，歧义保留。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T22",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "question_reference",
+          "possible_generator_overrefusal"
+        ],
+        "note": "文章使用两种LDA，gold取用户聚类解读，相关段落已在上下文。若按该解读新版弃答过严，但未澄清指代前不把它确认为模型误拒。",
+        "evidence_ids": [
+          "1811.02906:s6:p3",
+          "1811.02906:s3:p6"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1811.02906:s6:p3",
+          "candidate_position": 3,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "c21d26130b521c9596a1edd7b9ef3fe80a499f1e",
+      "paper_id": "1909.05358",
+      "bucket": "changed",
+      "audit_id": "T23",
+      "pool": "train_regression",
+      "dataset_label": "extractive",
+      "stage_a": {
+        "audit_id": "T23",
+        "context_sufficiency": "sufficient",
+        "confidence": "high",
+        "reason": "引言逐一列出六个任务领域，可直接完整作答。",
+        "evidence_ids": [
+          "1909.05358:s0:p2"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v2": {
+          "masked_alias": "A",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 1.0,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "六个领域逐一完整。"
+          }
+        },
+        "v1": {
+          "masked_alias": "B",
+          "status": "answered",
+          "checks": {
+            "citation_integrity": "passed",
+            "semantic_support": "passed"
+          },
+          "answer_f1": 0.6666666666666666,
+          "semantic_verifier_called": true,
+          "stage_b": {
+            "supported": "yes",
+            "direct": "yes",
+            "complete": "yes",
+            "publishable": "yes",
+            "reason": "六个领域完整，规模附加句有据但重复。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T23",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "answer_format"
+        ],
+        "note": "两版都完整列出六个领域并被预先判可发布；新版删除附加规模信息后F1提高，未见核验贡献。",
+        "evidence_ids": [
+          "1909.05358:s0:p2"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1909.05358:s0:p2",
+          "candidate_position": 13,
+          "in_actual_context": true
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    },
+    {
+      "question_id": "8c48c726bb17a17d70ab29db4d65a93030dd5382",
+      "paper_id": "1905.07791",
+      "bucket": "answerable_generator_abstained",
+      "audit_id": "T24",
+      "pool": "dev_comparison",
+      "dataset_label": "abstractive",
+      "stage_a": {
+        "audit_id": "T24",
+        "context_sufficiency": "insufficient",
+        "confidence": "high",
+        "reason": "说明从头训练和交叉验证，但未给任务编码器所需样本数量或最小规模；折数不是数据量。",
+        "evidence_ids": [
+          "1905.07791:s5:p1",
+          "1905.07791:s3:p3"
+        ],
+        "source": "model_review_before_drafts_and_gold"
+      },
+      "arms": {
+        "v1": {
+          "masked_alias": "A",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "实际上下文没有数据数量，合理弃答。"
+          }
+        },
+        "v2": {
+          "masked_alias": "B",
+          "status": "evidence_insufficient",
+          "checks": {
+            "citation_integrity": "not_run",
+            "semantic_support": "not_run"
+          },
+          "answer_f1": 0.0,
+          "semantic_verifier_called": false,
+          "stage_b": {
+            "supported": "na",
+            "direct": "na",
+            "complete": "na",
+            "publishable": "abstained",
+            "reason": "实际上下文没有数据数量，合理弃答。"
+          }
+        }
+      },
+      "stage_c": {
+        "audit_id": "T24",
+        "source": "model_review_after_gold_and_verdict",
+        "diagnostic_tags": [
+          "retrieval_coverage",
+          "quantity_scope"
+        ],
+        "note": "数量段落不在候选20；原文支持训练语料使用量，不证明最低需要量。当前上下文没有数量，两版弃答合理；即使补入标准证据也必须区分实际使用和最小需求。",
+        "evidence_ids": [
+          "1905.07791:s2:p2"
+        ],
+        "human_adjudication": "pending",
+        "amendments": []
+      },
+      "actual_candidate_count": 20,
+      "actual_context_count": 5,
+      "gold_mapping_diagnostic_only": [
+        {
+          "chunk_id": "1905.07791:s0:p5",
+          "candidate_position": 2,
+          "in_actual_context": true
+        },
+        {
+          "chunk_id": "1905.07791:s2:p2",
+          "candidate_position": null,
+          "in_actual_context": false
+        }
+      ],
+      "human_review": {
+        "status": "pending"
+      },
+      "synthetic_label": null
+    }
+  ]
+}
