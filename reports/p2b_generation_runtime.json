@@ -1,0 +1,596 @@
+{
+  "protocol": "paper-claims-v1-four-case-smoke",
+  "generated_at": "2026-09-22T03:21:48.511361+00:00",
+  "source_sha256": "b3536e990547d363800011a5993d5a46b832121a6b09563dfcfbd0206226e9d9",
+  "selection_sha256": "9c1fd5133d5245ce2bebf19b74aabc5917daa876134d95b58623a605d0328ced",
+  "cases": [
+    {
+      "category": "abstractive",
+      "question_id": "02428a8fec9788f6dc3a86b5d5f3aa679935678d",
+      "paper_id": "1503.00841",
+      "status": "answered",
+      "trace_id": "ba34ff2ea0fa45e18fdeb8808d30e07b",
+      "trace": {
+        "k1": 1.5,
+        "b": 0.75,
+        "corpus_paragraphs": 61317,
+        "paper_paragraphs": 70,
+        "latency_ms": 5295.433,
+        "retriever": "dense",
+        "candidate_pool": 20,
+        "rrf_constant": null,
+        "vector_collection": "20c446bdba21b6d7ca95f989d08743354b9d46ccb751e44bd5f7c0c23c80c1d3",
+        "embedding": {
+          "model": "BAAI/bge-small-en-v1.5",
+          "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+          "dimensions": 384,
+          "pooling": "normalized-cls",
+          "max_tokens": 512,
+          "window_tokens": 510,
+          "overlap_tokens": 64,
+          "paragraph_aggregation": "max-cosine",
+          "query_prefix": "Represent this sentence for searching relevant passages: ",
+          "preprocessing_version": 1
+        },
+        "vector_latency_ms": 3585.735,
+        "model_calls": 2,
+        "query_embedding_precomputed": false,
+        "returned": 5,
+        "score_kind": "cross_encoder_logit",
+        "bm25_candidates": 0,
+        "dense_candidates": 20,
+        "rerank_enabled": true,
+        "reranker": {
+          "model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+          "revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+          "max_tokens": 512,
+          "max_query_tokens": 128,
+          "overlap_tokens": 64,
+          "max_windows": 256,
+          "max_candidates": 50,
+          "aggregation": "max-logit",
+          "query_prefix": "",
+          "preprocessing_version": 1
+        },
+        "reranker_stats": {
+          "windows": 20,
+          "batches": 2,
+          "load_ms": 92.536,
+          "inference_ms": 119.823,
+          "device": "cpu"
+        },
+        "rerank_candidates": [
+          "1503.00841:s0:p2",
+          "1503.00841:s13:p0",
+          "1503.00841:s12:p3",
+          "1503.00841:s1:p0",
+          "1503.00841:s0:p3",
+          "1503.00841:s13:p5",
+          "1503.00841:s9:p2",
+          "1503.00841:abstract",
+          "1503.00841:s12:p2",
+          "1503.00841:s4:p5",
+          "1503.00841:s13:p4",
+          "1503.00841:s3:p0",
+          "1503.00841:s7:p4",
+          "1503.00841:s0:p7",
+          "1503.00841:s2:p1",
+          "1503.00841:s8:p3",
+          "1503.00841:s9:p1",
+          "1503.00841:s5:p0",
+          "1503.00841:s2:p0",
+          "1503.00841:s4:p13"
+        ],
+        "rerank_candidate_count": 20,
+        "rerank_latency_ms": 222.317,
+        "storage": "postgres",
+        "corpus_revision": "1",
+        "fact_check": "database",
+        "bm25_latency_ms": 0
+      },
+      "generation": {
+        "prompt_version": "paper-claims-v1",
+        "context": {
+          "budget_unit": "unicode_characters",
+          "limit": 24000,
+          "used": 2614,
+          "included_ids": [
+            "1503.00841:s13:p0",
+            "1503.00841:abstract",
+            "1503.00841:s1:p0",
+            "1503.00841:s0:p3",
+            "1503.00841:s12:p3"
+          ],
+          "skipped_ids": []
+        },
+        "calls": [
+          {
+            "stage": "generate",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1158,
+              "completion_tokens": 346,
+              "total_tokens": 1504,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 1158
+            },
+            "latency_ms": 1969.811,
+            "output_sha256": "3a175314290479dda210649adb7e50ceb7a2f2f98719d3678799314de09b509f"
+          },
+          {
+            "stage": "verify",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1182,
+              "completion_tokens": 59,
+              "total_tokens": 1241,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 1182
+            },
+            "latency_ms": 714.92,
+            "output_sha256": "63f9420b6fb45f5fc0f09c8d7debfb1984f34194edeb490e408c79d9957411a6"
+          }
+        ],
+        "checks": {
+          "citation_integrity": "passed",
+          "semantic_support": "passed"
+        },
+        "evidence_sha256": "15139bc6603279079e3435e7bb86328ada031442473e016133970374e1a6ec8e",
+        "model_calls": 2,
+        "draft_sha256": "782259221b8f1fb986fe6821bbca98621be04c115af71113440bbf1bda3b57e0",
+        "publication_check": "database_revision_and_hash",
+        "verified_draft_sha256": "782259221b8f1fb986fe6821bbca98621be04c115af71113440bbf1bda3b57e0",
+        "latency_ms": 8030.821
+      },
+      "claim_count": 5,
+      "published_claims_sha256": "37304784ebb5ef7cec2eb3ec690449e3f341c0f717cc1ddc41a80310ee624e21",
+      "manual_spot_review": "Manual spot review: relevant prior-knowledge sensitivity, but multiple off-target claims; not a full-quality answer."
+    },
+    {
+      "category": "boolean",
+      "question_id": "00c57e45ac6afbdfa67350a57e81b4fad0ed2885",
+      "paper_id": "1701.08229",
+      "status": "answered",
+      "trace_id": "f4aa68b7bb6f45829facdf29b0119df7",
+      "trace": {
+        "k1": 1.5,
+        "b": 0.75,
+        "corpus_paragraphs": 61317,
+        "paper_paragraphs": 30,
+        "latency_ms": 243.458,
+        "retriever": "dense",
+        "candidate_pool": 20,
+        "rrf_constant": null,
+        "vector_collection": "20c446bdba21b6d7ca95f989d08743354b9d46ccb751e44bd5f7c0c23c80c1d3",
+        "embedding": {
+          "model": "BAAI/bge-small-en-v1.5",
+          "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+          "dimensions": 384,
+          "pooling": "normalized-cls",
+          "max_tokens": 512,
+          "window_tokens": 510,
+          "overlap_tokens": 64,
+          "paragraph_aggregation": "max-cosine",
+          "query_prefix": "Represent this sentence for searching relevant passages: ",
+          "preprocessing_version": 1
+        },
+        "vector_latency_ms": 18.767,
+        "model_calls": 2,
+        "query_embedding_precomputed": false,
+        "returned": 5,
+        "score_kind": "cross_encoder_logit",
+        "bm25_candidates": 0,
+        "dense_candidates": 20,
+        "rerank_enabled": true,
+        "reranker": {
+          "model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+          "revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+          "max_tokens": 512,
+          "max_query_tokens": 128,
+          "overlap_tokens": 64,
+          "max_windows": 256,
+          "max_candidates": 50,
+          "aggregation": "max-logit",
+          "query_prefix": "",
+          "preprocessing_version": 1
+        },
+        "reranker_stats": {
+          "windows": 20,
+          "batches": 2,
+          "load_ms": 0,
+          "inference_ms": 182.583,
+          "device": "cpu"
+        },
+        "rerank_candidates": [
+          "1701.08229:s3:p0",
+          "1701.08229:s3:p1",
+          "1701.08229:s3:p2",
+          "1701.08229:s5:p0",
+          "1701.08229:s2:p0",
+          "1701.08229:s4:p7",
+          "1701.08229:abstract",
+          "1701.08229:s4:p5",
+          "1701.08229:s1:p0",
+          "1701.08229:s7:p0",
+          "1701.08229:s2:p9",
+          "1701.08229:s6:p0",
+          "1701.08229:s4:p3",
+          "1701.08229:s4:p4",
+          "1701.08229:s8:p0",
+          "1701.08229:s2:p1",
+          "1701.08229:s4:p6",
+          "1701.08229:s4:p0",
+          "1701.08229:s0:p0",
+          "1701.08229:s4:p2"
+        ],
+        "rerank_candidate_count": 20,
+        "rerank_latency_ms": 189.33,
+        "storage": "postgres",
+        "corpus_revision": "1",
+        "fact_check": "database",
+        "bm25_latency_ms": 0
+      },
+      "generation": {
+        "prompt_version": "paper-claims-v1",
+        "context": {
+          "budget_unit": "unicode_characters",
+          "limit": 24000,
+          "used": 3769,
+          "included_ids": [
+            "1701.08229:s4:p5",
+            "1701.08229:s3:p2",
+            "1701.08229:s1:p0",
+            "1701.08229:s8:p0",
+            "1701.08229:s7:p0"
+          ],
+          "skipped_ids": []
+        },
+        "calls": [
+          {
+            "stage": "generate",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1402,
+              "completion_tokens": 284,
+              "total_tokens": 1686,
+              "prompt_cache_hit_tokens": 384,
+              "prompt_cache_miss_tokens": 1018
+            },
+            "latency_ms": 1853.627,
+            "output_sha256": "4e4c7ea74bad9e379a5a1a842e1cc5cb6de4d063d6a51bf3a9fc9d01586c99ec"
+          },
+          {
+            "stage": "verify",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1095,
+              "completion_tokens": 63,
+              "total_tokens": 1158,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 839
+            },
+            "latency_ms": 994.092,
+            "output_sha256": "fa09155f67799454e1ff7ee6cde31d7aca91a66577e459be8aa5c50d6fb0f791"
+          }
+        ],
+        "checks": {
+          "citation_integrity": "passed",
+          "semantic_support": "passed"
+        },
+        "evidence_sha256": "dfc9ae799b4edddca66c0ee66e5991260cae73031419872ae0950a385caa716c",
+        "model_calls": 2,
+        "draft_sha256": "b1e87fd2ac5c0b5a803bfb75dce6ec004c183a0038fff572969bdd04645741c7",
+        "publication_check": "database_revision_and_hash",
+        "verified_draft_sha256": "b1e87fd2ac5c0b5a803bfb75dce6ec004c183a0038fff572969bdd04645741c7",
+        "latency_ms": 3135.102
+      },
+      "claim_count": 4,
+      "published_claims_sha256": "26f3fd929b9f9d45bb00c8aef99a589b969fcb3781d823e841f2e926c4f566a0",
+      "manual_spot_review": "Manual spot review: English examples do not establish exclusively English datasets. Same-model verifier missed the overgeneralization; not counted as correct."
+    },
+    {
+      "category": "extractive",
+      "question_id": "009ce6f2bea67e7df911b3f93443b23467c9f4a1",
+      "paper_id": "1909.09587",
+      "status": "evidence_insufficient",
+      "trace_id": "607ff2ce5f714487adf13ae5a4756d9d",
+      "trace": {
+        "k1": 1.5,
+        "b": 0.75,
+        "corpus_paragraphs": 61317,
+        "paper_paragraphs": 29,
+        "latency_ms": 256.677,
+        "retriever": "dense",
+        "candidate_pool": 20,
+        "rrf_constant": null,
+        "vector_collection": "20c446bdba21b6d7ca95f989d08743354b9d46ccb751e44bd5f7c0c23c80c1d3",
+        "embedding": {
+          "model": "BAAI/bge-small-en-v1.5",
+          "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+          "dimensions": 384,
+          "pooling": "normalized-cls",
+          "max_tokens": 512,
+          "window_tokens": 510,
+          "overlap_tokens": 64,
+          "paragraph_aggregation": "max-cosine",
+          "query_prefix": "Represent this sentence for searching relevant passages: ",
+          "preprocessing_version": 1
+        },
+        "vector_latency_ms": 21.677,
+        "model_calls": 2,
+        "query_embedding_precomputed": false,
+        "returned": 5,
+        "score_kind": "cross_encoder_logit",
+        "bm25_candidates": 0,
+        "dense_candidates": 20,
+        "rerank_enabled": true,
+        "reranker": {
+          "model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+          "revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+          "max_tokens": 512,
+          "max_query_tokens": 128,
+          "overlap_tokens": 64,
+          "max_windows": 256,
+          "max_candidates": 50,
+          "aggregation": "max-logit",
+          "query_prefix": "",
+          "preprocessing_version": 1
+        },
+        "reranker_stats": {
+          "windows": 20,
+          "batches": 2,
+          "load_ms": 0,
+          "inference_ms": 191.457,
+          "device": "cpu"
+        },
+        "rerank_candidates": [
+          "1909.09587:s3:p1",
+          "1909.09587:s0:p1",
+          "1909.09587:s6:p0",
+          "1909.09587:s14:p1",
+          "1909.09587:s4:p0",
+          "1909.09587:s5:p0",
+          "1909.09587:s2:p1",
+          "1909.09587:s0:p0",
+          "1909.09587:s3:p0",
+          "1909.09587:s8:p1",
+          "1909.09587:s2:p0",
+          "1909.09587:abstract",
+          "1909.09587:s9:p0",
+          "1909.09587:s8:p0",
+          "1909.09587:s1:p0",
+          "1909.09587:s17:p0",
+          "1909.09587:s2:p2",
+          "1909.09587:s13:p0",
+          "1909.09587:s16:p0",
+          "1909.09587:s0:p2"
+        ],
+        "rerank_candidate_count": 20,
+        "rerank_latency_ms": 200.362,
+        "storage": "postgres",
+        "corpus_revision": "1",
+        "fact_check": "database",
+        "bm25_latency_ms": 0
+      },
+      "generation": {
+        "prompt_version": "paper-claims-v1",
+        "context": {
+          "budget_unit": "unicode_characters",
+          "limit": 24000,
+          "used": 2380,
+          "included_ids": [
+            "1909.09587:s0:p0",
+            "1909.09587:s14:p1",
+            "1909.09587:s13:p0",
+            "1909.09587:s0:p1",
+            "1909.09587:s8:p1"
+          ],
+          "skipped_ids": []
+        },
+        "calls": [
+          {
+            "stage": "generate",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1233,
+              "completion_tokens": 11,
+              "total_tokens": 1244,
+              "prompt_cache_hit_tokens": 384,
+              "prompt_cache_miss_tokens": 849
+            },
+            "latency_ms": 561.762,
+            "output_sha256": "bd9d8293c170eaf8b99523c29d8ab0c684673c3760b3a6c7fcb5b0656173c397"
+          }
+        ],
+        "checks": {
+          "citation_integrity": "not_run",
+          "semantic_support": "not_run"
+        },
+        "evidence_sha256": "26d7a90d9bb13f2185b20a3ef264c0bfb3c6735116263c40735cefff2b9984ff",
+        "model_calls": 1,
+        "publication_check": "database_revision_and_hash",
+        "latency_ms": 863.247
+      },
+      "claim_count": 0,
+      "published_claims_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "manual_spot_review": "Manual spot review: question answerable in paper, but retrieved context lacks explicit baseline detail. Gold-ID overlap alone is insufficient with BIBREF placeholders."
+    },
+    {
+      "category": "unanswerable",
+      "question_id": "003d6f9722ddc2ee13e879fefafc315fb8e87cb9",
+      "paper_id": "1802.00396",
+      "status": "verification_failed",
+      "trace_id": "ad2f2a9feab84db596b5b7dcce88fbc5",
+      "trace": {
+        "k1": 1.5,
+        "b": 0.75,
+        "corpus_paragraphs": 61317,
+        "paper_paragraphs": 75,
+        "latency_ms": 231.496,
+        "retriever": "dense",
+        "candidate_pool": 20,
+        "rrf_constant": null,
+        "vector_collection": "20c446bdba21b6d7ca95f989d08743354b9d46ccb751e44bd5f7c0c23c80c1d3",
+        "embedding": {
+          "model": "BAAI/bge-small-en-v1.5",
+          "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+          "dimensions": 384,
+          "pooling": "normalized-cls",
+          "max_tokens": 512,
+          "window_tokens": 510,
+          "overlap_tokens": 64,
+          "paragraph_aggregation": "max-cosine",
+          "query_prefix": "Represent this sentence for searching relevant passages: ",
+          "preprocessing_version": 1
+        },
+        "vector_latency_ms": 26.555,
+        "model_calls": 2,
+        "query_embedding_precomputed": false,
+        "returned": 5,
+        "score_kind": "cross_encoder_logit",
+        "bm25_candidates": 0,
+        "dense_candidates": 20,
+        "rerank_enabled": true,
+        "reranker": {
+          "model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+          "revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+          "max_tokens": 512,
+          "max_query_tokens": 128,
+          "overlap_tokens": 64,
+          "max_windows": 256,
+          "max_candidates": 50,
+          "aggregation": "max-logit",
+          "query_prefix": "",
+          "preprocessing_version": 1
+        },
+        "reranker_stats": {
+          "windows": 20,
+          "batches": 2,
+          "load_ms": 0,
+          "inference_ms": 156.39,
+          "device": "cpu"
+        },
+        "rerank_candidates": [
+          "1802.00396:s8:p16",
+          "1802.00396:s9:p10",
+          "1802.00396:s4:p0",
+          "1802.00396:s8:p17",
+          "1802.00396:s9:p6",
+          "1802.00396:s9:p2",
+          "1802.00396:s5:p0",
+          "1802.00396:s4:p2",
+          "1802.00396:s9:p3",
+          "1802.00396:s4:p1",
+          "1802.00396:s9:p5",
+          "1802.00396:s9:p8",
+          "1802.00396:s5:p1",
+          "1802.00396:s5:p2",
+          "1802.00396:s0:p2",
+          "1802.00396:s9:p11",
+          "1802.00396:s9:p4",
+          "1802.00396:s9:p1",
+          "1802.00396:s8:p22",
+          "1802.00396:s9:p12"
+        ],
+        "rerank_candidate_count": 20,
+        "rerank_latency_ms": 164.932,
+        "storage": "postgres",
+        "corpus_revision": "1",
+        "fact_check": "database",
+        "bm25_latency_ms": 0
+      },
+      "generation": {
+        "prompt_version": "paper-claims-v1",
+        "context": {
+          "budget_unit": "unicode_characters",
+          "limit": 24000,
+          "used": 4009,
+          "included_ids": [
+            "1802.00396:s9:p5",
+            "1802.00396:s9:p2",
+            "1802.00396:s4:p0",
+            "1802.00396:s0:p2",
+            "1802.00396:s8:p17"
+          ],
+          "skipped_ids": []
+        },
+        "calls": [
+          {
+            "stage": "generate",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1497,
+              "completion_tokens": 283,
+              "total_tokens": 1780,
+              "prompt_cache_hit_tokens": 384,
+              "prompt_cache_miss_tokens": 1113
+            },
+            "latency_ms": 1780.803,
+            "output_sha256": "7fc5fb30927333094245bb04b344a1207ba5f9a64c34c9b61e29311292aefb72"
+          },
+          {
+            "stage": "verify",
+            "status": "completed",
+            "requested_model": "deepseek-flash",
+            "model": "deepseek-flash",
+            "system_fingerprint": "aeb56401ca74e127821c4f9126dcb669",
+            "usage": {
+              "prompt_tokens": 1260,
+              "completion_tokens": 50,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 1004
+            },
+            "latency_ms": 685.443,
+            "output_sha256": "5280a19c6fba2a29b68a31d3bce5689c652480b3c062633c7cc36dfb3a4775f8"
+          }
+        ],
+        "checks": {
+          "citation_integrity": "passed",
+          "semantic_support": "failed"
+        },
+        "evidence_sha256": "fe421f31adefe3c27d472a423a1bc7c3e4da352fe877ffe8af82830ad0cb7898",
+        "model_calls": 2,
+        "draft_sha256": "e82ae54c9e3b65f7c7e570bde61064dfeff4d3467d7b4d03850893a5f93628f6",
+        "latency_ms": 2702.063
+      },
+      "claim_count": 0,
+      "published_claims_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "manual_spot_review": "Draft blocked by semantic verification. This single case does not establish refusal performance."
+    }
+  ],
+  "limitations": [
+    "Four-case smoke check only; not an answer accuracy or refusal benchmark",
+    "Same-model semantic judge can make correlated errors; manual review required"
+  ],
+  "usage": {
+    "prompt_tokens": 8827,
+    "completion_tokens": 1096
+  },
+  "model_calls": 7,
+  "estimated_peak_uncached_usd": 0.003963,
+  "cost_note": "2026-09-22 deepseek-flash peak uncached list rates; estimate, not an invoice; failed calls may lack usage",
+  "acceptance": {
+    "engineering": "passed",
+    "model_quality": "not_accepted",
+    "learning": "not_started"
+  }
+}

@@ -37,7 +37,10 @@ export interface Retrieval {
   query: string;
   paper_id: string;
   top_k: number;
-  status: 'evidence_found' | 'no_lexical_match' | 'no_evidence';
+  mode?: 'evidence_only' | 'grounded_answer';
+  status: 'evidence_found' | 'no_lexical_match' | 'no_evidence' | 'answered' | 'evidence_insufficient' | 'not_configured' | 'verification_failed' | 'model_unavailable' | 'model_refused';
+  claims?: { text: string; evidence: { chunk_id: string; quote: string }[] }[];
+  generation?: { model_calls: number; latency_ms: number; checks: { citation_integrity: string; semantic_support: string } };
   citations: Citation[];
   notice: string;
   trace: { rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
@@ -49,6 +52,7 @@ export interface System {
   database: { status: string };
   object_store: { status: string; provider: string; bucket: string };
   corpus: { papers: number; paragraphs: number; objects: number };
+  generation?: { state: string; provider: string; model: string };
   capabilities: { generation: boolean; pdf_upload: boolean };
 }
 

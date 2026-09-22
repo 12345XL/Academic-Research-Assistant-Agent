@@ -1,0 +1,35 @@
+{
+  "protocol": "paper-claims-v1-four-case-smoke",
+  "split": "dev",
+  "config": {
+    "mode": "dense",
+    "rerank": true,
+    "top_k": 5
+  },
+  "data_sha256": {
+    "questions.jsonl": "4c291f6101490e6230dbe863e4cae885324bd99fd075e9820a84f4e05ae6de65",
+    "paragraphs.jsonl": "7b22f0e30f62175ca6a4e67e4690db94fb4e9e430590bb90f59442700fc66293"
+  },
+  "cases": [
+    {
+      "category": "abstractive",
+      "question_id": "02428a8fec9788f6dc3a86b5d5f3aa679935678d",
+      "paper_id": "1503.00841"
+    },
+    {
+      "category": "boolean",
+      "question_id": "00c57e45ac6afbdfa67350a57e81b4fad0ed2885",
+      "paper_id": "1701.08229"
+    },
+    {
+      "category": "extractive",
+      "question_id": "009ce6f2bea67e7df911b3f93443b23467c9f4a1",
+      "paper_id": "1909.09587"
+    },
+    {
+      "category": "unanswerable",
+      "question_id": "003d6f9722ddc2ee13e879fefafc315fb8e87cb9",
+      "paper_id": "1802.00396"
+    }
+  ]
+}

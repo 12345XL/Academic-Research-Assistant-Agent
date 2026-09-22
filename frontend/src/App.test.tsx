@@ -202,3 +202,48 @@ describe('research session state', () => {
     expect(screen.queryByText('存储已连接')).toBeNull();
   });
 });
+
+function setupAnswer(answer: unknown | ((options: RequestInit) => Promise<Response>)) {
+  const fetch = vi.fn((url: string, options: RequestInit) => {
+    if (url === '/api/v1/system') return Promise.resolve(json({ ...system, capabilities: { generation: true }, generation: {model:'deepseek-flash'} }));
+    if (url === '/api/v1/ingestions') return Promise.resolve(json({items:[]}));
+    if (url.startsWith('/api/v1/papers?')) return Promise.resolve(json({items:papers,total:2}));
+    if (url === '/api/v1/answer') return typeof answer === 'function' ? answer(options) : Promise.resolve(json(answer));
+    throw new Error(`Unexpected URL ${url}`);
+  });
+  vi.stubGlobal('fetch', fetch);
+  return fetch;
+}
+const answered = { ...evidence, mode:'grounded_answer', status:'answered', notice:'核验后发布',
+  claims:[{text:'已核验的结论', evidence:[{chunk_id:'chunk1',quote:'This result'}]}],
+  generation:{model_calls:2,latency_ms:1000,checks:{citation_integrity:'passed',semantic_support:'passed'}} };
+async function submitAnswer() {
+  await screen.findByRole('heading',{level:1,name:papers[0].title});
+  fireEvent.change(screen.getByLabelText('任务'),{target:{value:'answer'}});
+  fireEvent.change(screen.getByLabelText('输入检索问题'),{target:{value:'method'}});
+  fireEvent.click(screen.getByRole('button',{name:'生成并核验回答'}));
+}
+it('publishes verified claims with quotations, and clears answers on task change',async()=>{
+  const fetch=setupAnswer(answered); render(<App/>); await submitAnswer();
+  await screen.findByText('已核验的结论');
+  expect(screen.getByText('This result')).toBeTruthy();
+  expect(fetch.mock.calls.some(c=>c[0]==='/api/v1/answer')).toBe(true);
+  fireEvent.change(screen.getByLabelText('任务'),{target:{value:'evidence'}});
+  expect(screen.queryByText('已核验的结论')).toBeNull();
+});
+it('never renders draft claims from a failed verification response',async()=>{
+  setupAnswer({...answered,status:'verification_failed',notice:'草稿已拦截'}); render(<App/>); await submitAnswer();
+  await screen.findByText('回答未通过核验');
+  expect(screen.queryByText('已核验的结论')).toBeNull();
+  expect(screen.getByText(evidence.citations[0].text)).toBeTruthy();
+});
+it('ignores late generated answers after switching the paper',async()=>{
+  let done:(response:Response)=>void=()=>{};
+  let signal:AbortSignal|null=null;
+  setupAnswer((options:RequestInit)=>{signal=options.signal || null; return new Promise<Response>(resolve=>{done=resolve;});});
+  render(<App/>); await submitAnswer();
+  fireEvent.click(screen.getByRole('button',{name:/Second paper title/}));
+  expect(signal!.aborted).toBe(true);
+  await act(async()=>done(json(answered)));
+  expect(screen.queryByText('已核验的结论')).toBeNull();
+});

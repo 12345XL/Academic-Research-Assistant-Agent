@@ -16,3 +16,17 @@
 .question-toolbar{flex-wrap:wrap;gap:10px}.question-toolbar>label{white-space:nowrap}.question-submit{margin-left:auto}
 
 .rerank-toggle{display:flex;align-items:center;gap:6px}.rerank-toggle input{accent-color:var(--green)}
+
+/* Evidence-bound answer publication */
+.generation-hint { color: #69766f; font-size: 12px; line-height: 1.7; margin: 12px 0; }
+.answer-section { margin: 22px 0; padding: 22px; border: 1px solid #dddcd2; border-radius: 12px; background: #faf9f3; }
+.answer-section.verified { border-color: #bdd6c5; background: #f5faf6; }
+.answer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.answer-heading h2 { margin: 0; font-size: 18px; }
+.answer-notice, .answer-meta { color: #66766c; font-size: 12px; line-height: 1.7; }
+.answer-claim { margin-top: 18px; line-height: 1.8; overflow-wrap: anywhere; }
+.answer-claim p { margin-bottom: 8px; }
+.claim-references { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.claim-references summary { cursor: pointer; color: #357356; }
+.claim-references blockquote { margin: 10px 0; padding: 8px 14px; border-left: 2px solid #99bfa5; background: #fff; }
+.answer-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 18px; }

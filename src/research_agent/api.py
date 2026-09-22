@@ -16,6 +16,7 @@ from . import __version__
 from .service import CorpusChangedError, CorpusIntegrityError, EvidenceService, PersistentEvidenceService
 from .embeddings import VectorUnavailableError
 from .reranking import RerankerUnavailableError
+from .generation import AnswerService, GenerationSettings, GenerationBusyError
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -39,7 +40,11 @@ class RetrievalRequest(BaseModel):
         return value.strip()
 
 
-def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
+def create_app(data_dir: Path | None = None, settings=None, generation_settings=None, model_client=None) -> FastAPI:
+    # Explicit file or infrastructure settings stay independent of developer secrets.
+    generation_settings = generation_settings or (GenerationSettings.from_env()
+        if data_dir is None and settings is None else GenerationSettings())
+    answers = AnswerService(generation_settings, model_client)
     directory = data_dir or Path(os.getenv("RESEARCH_DATA_DIR", "data/processed"))
     persistent = settings is not None or (data_dir is None and bool(os.getenv("DATABASE_URL")))
     # Explicit data_dir keeps P1 evaluation/tests independent of developer secrets.
@@ -65,8 +70,12 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
 
     app = FastAPI(
         title="科研论文助手Agent · 论文证据工作台", version=__version__, lifespan=lifespan,
-        description="指定论文内的 BM25、向量与 RRF 原文证据检索；当前仅本机公共语料，无生成式回答。",
+        description="指定论文内的 BM25、向量与 RRF 原文证据检索；本机公共语料；可选 DeepSeek 生成与引用核验。",
     )
+
+    @app.exception_handler(GenerationBusyError)
+    async def generation_busy(request: Request, exc: GenerationBusyError):
+        return JSONResponse(status_code=409, content={"detail": "已有回答正在运行，请完成后再试"})
 
     @app.exception_handler(CorpusChangedError)
     async def changed_corpus(request: Request, exc: CorpusChangedError):
@@ -108,9 +117,9 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
         if persistent:
             try:
                 counts = repository.summary()
-                return {"status": "ready", "stage": "P2B-2", "version": __version__, "papers": counts["papers"]}
+                return {"status": "ready", "stage": "P2B-3", "version": __version__, "papers": counts["papers"]}
             except Exception:
-                return {"status": "database_unavailable", "stage": "P2B-2", "version": __version__, "papers": 0}
+                return {"status": "database_unavailable", "stage": "P2B-3", "version": __version__, "papers": 0}
         evidence = app.state.evidence
         return {"status": "ready" if evidence else "data_missing", "stage": "P1",
                 "version": __version__, "papers": len(evidence.papers) if evidence else 0}
@@ -123,7 +132,8 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
                     "object_store": {"status": "not_configured", "provider": "none", "bucket": ""},
                     "corpus": {"papers": len(evidence.papers) if evidence else 0,
                                "paragraphs": evidence.index.n if evidence else 0, "objects": 0},
-                    "capabilities": {"generation": False, "pdf_upload": False}}
+                    "generation": generation_settings.public_status(),
+                    "capabilities": {"generation": generation_settings.configured, "pdf_upload": False}}
         try:
             counts = repository.summary()
             database_status = "ready"
@@ -139,10 +149,11 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
             vector_status = VectorStore(repository).status(repository.revision())
         except Exception:
             vector_status = {"state": "unavailable"}
-        return {"stage": "P2B-2", "mode": "postgres", "database": {"status": database_status},
+        return {"stage": "P2B-3", "mode": "postgres", "database": {"status": database_status},
                 "object_store": {"status": storage_status, "provider": "S3-compatible", "bucket": settings.s3_bucket},
                 "corpus": counts, "vector_index": vector_status,
-                "capabilities": {"generation": False, "pdf_upload": False,
+                "generation": generation_settings.public_status(),
+                "capabilities": {"generation": generation_settings.configured, "pdf_upload": False,
                                  "hybrid_retrieval": vector_status["state"] == "ready"}}
 
     @app.get("/ready")
@@ -228,6 +239,17 @@ def create_app(data_dir: Path | None = None, settings=None) -> FastAPI:
             raise HTTPException(404, "论文不存在") from None
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
+
+    @app.post("/api/v1/answer")
+    def answer(body: RetrievalRequest):
+        if not persistent and (body.mode != "bm25" or body.rerank):
+            raise HTTPException(409, "向量、混合与重排检索需要 PostgreSQL 模式及相应模型/索引")
+        try:
+            return answers.answer(service(), body.query, body.paper_id, body.top_k, body.mode, body.rerank)
+        except KeyError:
+            raise HTTPException(404, "论文不存在") from None
+        except ValueError:
+            raise HTTPException(422, "输入超出模型或检索限制，请缩短问题后重试") from None
 
     return app
 
