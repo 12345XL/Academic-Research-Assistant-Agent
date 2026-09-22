@@ -10,4 +10,4 @@
 - 使用 `requirements-lock.txt` 复现 P1 依赖；源码运行显式设置 `PYTHONPATH=src` 或 uvicorn `--app-dir src`。
 - 阶段工程验收后已获授权 commit + push 到指定 GitHub；推送前检查改动和排除项，不强推。
 - 不提交 `.env`、密钥、原始语料、个人论文、虚拟环境和未经授权的附件全文。
-- Markdown 行内数学用 `$...$`，块公式用单独行 `$$`；交付时检查定界符和异常控制字符。
+- 本仓库的 `.md` 要兼容不支持 LaTeX 的普通预览器：技术公式用带语言标记 `text` 的代码块，变量可用普通文本或反引号；金额写作 `USD 0.30`。不要在文档正文使用美元符号作为数学定界符，交付时运行 `scripts/check_markdown.py`。

@@ -73,6 +73,7 @@ RUN_STORAGE_INTEGRATION=1 .venv/bin/python -m pytest -q
 npm --prefix frontend test
 npm --prefix frontend run build
 .venv/bin/python scripts/verify_workbench.py
+.venv/bin/python scripts/check_markdown.py
 ```
 
 集成测试要求本机 PostgreSQL 与 S3 已启动，并使用临时数据库/桶，不修改主语料。完整回归比较冻结 P1 的 745 道 dev 文本证据题的检索段落 ID；其问题只由离线验证脚本读取。报告见 [P2A 存储回归](reports/p2a_storage_regression.json)。向量和混合检索对照运行 `.venv/bin/python scripts/evaluate_hybrid.py --device cpu`，完整结果见 [P2B 三组评测](reports/p2b_retrieval_dev.json)。重排六组对照运行 `.venv/bin/python scripts/evaluate_reranker.py --device mps`，结果见 [P2B 重排消融](reports/p2b_reranker_dev.json)。
