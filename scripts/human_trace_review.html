@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>论文助手 · 人工轨迹复核</title>
+<style>
+:root{font:16px/1.7 system-ui,sans-serif;color:#182a36;background:#f2f5f5}*{box-sizing:border-box}body{margin:0}header{background:#123f45;color:white;padding:25px max(24px,calc((100vw - 1260px)/2));}h1{font-size:25px;margin:0}h2{font-size:21px}h3{font-size:18px}p{margin:.6em 0}.sub{color:#cae3e1;font-size:14px}main{max-width:1300px;margin:20px auto;padding:0 20px}.panel{background:white;border:1px solid #d9e3e4;border-radius:12px;padding:20px;margin-bottom:16px}.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}label{display:block;font-weight:600;margin:14px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{padding:9px;border:1px solid #acbfc3;border-radius:6px;background:#fff;max-width:100%}textarea{display:block;width:100%;min-height:85px;font-weight:400}button{background:#12666b;color:white;border:0;padding:10px 17px;border-radius:7px;cursor:pointer}button.secondary{background:#e7f0f0;color:#123f45}button:disabled{opacity:.5;cursor:default}.muted{color:#526971;font-size:14px}.notice{background:#fff4d6;padding:12px;border-radius:7px}.error{color:#9b1825;font-weight:600}.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}.source{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f8f8;border-left:3px solid #86aaa9;padding:12px;font-size:14px}.evidence{max-height:75vh;overflow:auto;padding-right:8px}.tag{font-size:13px;color:#35666c}.draft{border-top:1px solid #d9e3e4;padding-top:14px;margin-top:14px}blockquote{margin:10px 0;padding:8px 12px;background:#f4f6f7;font-size:14px;white-space:pre-wrap}details{margin:12px 0}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 ui-monospace,monospace}.step{font-weight:700;color:#12666b}.saved{border-left:3px solid #12666b;padding-left:12px}#message{min-height:26px}input[type=checkbox]{width:20px;height:20px;vertical-align:middle}a{color:#12666b}@media(max-width:850px){.grid{grid-template-columns:1fr}.evidence{max-height:none}main{padding:0 12px}}
+</style>
+<header><h1>论文助手 · 人工轨迹复核</h1><div class="sub">先看证据，再看草稿，最后对照原标注。共 24 题，允许分次完成。</div></header>
+<main>
+<section class="panel">
+<p class="notice">这是实际输出的审阅，不是面试。请由真实审阅者填写；没有预填模型结论，不会上传内容或调用模型。已看过报告也可复核，但必须如实声明。</p>
+<div class="bar"><div><label for="reviewer">审阅者代号</label><input id="reviewer" placeholder="例如 reviewer-01" maxlength="80"></div><div><label for="exposure">此前看过这些题的报告、答案或判决吗？</label><select id="exposure"><option value="">请选择</option><option value="exposed">看过部分或全部</option><option value="not_seen_self_reported">自报此前未看过</option><option value="unknown">不确定</option></select></div><button id="identity">保存审阅者信息</button></div>
+<p class="muted">首次保存后身份固定。更换审阅者请使用另一浏览器环境。页面按阶段隐藏材料，但源代码仍含材料，不保证真正盲审。</p>
+<details><summary>审阅口径：有出处，还需要答到了问题</summary><p>先确定对象、范围、数量单位及必须回答的项目。事实有出处、答到目标、覆盖必要信息分别判断。“完整”不要求复述全部论文。</p><p>允许有界部分回答：原草稿必须明确交代缺少的部分或适用范围。不能替草稿补上它没说的限定。没有发布声明不等于没有发布；典型规模不等于实际精确值。合理解读有分歧时保留不确定或选择澄清。</p><p>弃答与核验拦截分开；数据集标签是对照材料，可能存在对象或粒度分歧。审阅者需写明理由及证据位置，不能只因答案与 gold 不同就判错。</p></details>
+<div class="bar"><button class="secondary" id="export">导出当前进度 JSON</button><span id="progress"></span></div>
+<p id="message" role="status" aria-live="polite"></p>
+</section>
+<div class="panel bar"><button id="prev" class="secondary">上一题</button><label for="case" style="margin:0">当前题目</label><select id="case"></select><button id="next" class="secondary">下一题</button><span id="step" class="step"></span></div>
+<section id="workspace"></section>
+</main>
+<script id="data" type="application/json">__REVIEW_DATA__</script>
+<script>
+'use strict';
+const DATA=JSON.parse(document.querySelector('#data').textContent);
+const KEY='paper-human-review:'+DATA.packet_sha256;
+const $=s=>document.querySelector(s);
+const now=()=>new Date().toISOString();
+const fresh=()=>({schema:DATA.schema,packet_sha256:DATA.packet_sha256,source_manifest_sha256:DATA.source_manifest_sha256,rubric_sha256:DATA.rubric_sha256,source:'human_entered_unverified',reviewer:null,exposure:null,identity_saved_at:null,records:{},current:0});
+let state=fresh(),storageFailed=false,fatal=false;
+function message(text,error=false){$('#message').textContent=text;$('#message').className=error?'error':'muted';}
+try{const saved=localStorage.getItem(KEY);if(saved){const parsed=JSON.parse(saved);if(parsed.packet_sha256!==DATA.packet_sha256||!parsed.records||!Number.isInteger(parsed.current)||parsed.current<0||parsed.current>=DATA.cases.length)throw Error('进度格式不匹配');state=parsed;}}
+catch(e){fatal=true;message('无法读取进度。为避免覆盖旧记录，本页已停止录入；请先保留浏览器数据并排查，或用另一浏览器环境。',true);}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));storageFailed=false;message('进度已保存在当前浏览器；结束前请导出备份。');}catch(e){storageFailed=true;message('浏览器保存失败，当前内容仅在内存中。请立即导出，刷新会丢失。',true);}}
+function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+function detail(title,value){const d=el('details');d.append(el('summary',title),el('pre',JSON.stringify(value,null,2)));return d;}
+function field(root,name,label,choices,value=''){const l=el('label',label);l.htmlFor=name;root.append(l);let input;if(choices){input=el('select');input.append(new Option('请选择',''));for(const [v,t] of choices)input.append(new Option(t,v));}else{input=el('textarea');input.maxLength=5000;}input.id=name;input.name=name;input.value=value;input.required=true;root.append(input);return input;}
+const yn=[['yes','是'],['no','否'],['uncertain','不确定']];
+const actions=[['full','完整回答可发布'],['bounded_partial','有界部分回答可发布'],['clarify','应先澄清'],['reject','当前草稿不应发布'],['uncertain','暂不能裁定']];
+function stageName(r){return r?.c?'已完成':r?.b?'C · 解盲对照':r?.a?'B · 评价草稿':'A · 评价证据';}
+function identityReady(){if(fatal)return false;if(!state.reviewer){message('请先填写审阅者代号和此前曝光情况。',true);return false;}return true;}
+function readForm(form){if(!form.reportValidity())return null;const values=Object.fromEntries(new FormData(form));if(Object.values(values).some(v=>!v.trim())){message('请填写判断理由，不能只输入空格。',true);return null;}return values;}
+function saveDraft(){const form=$('#stage-form');if(!form)return;const c=DATA.cases[state.current],r=state.records[c.audit_id]||{};r.pending={phase:form.dataset.phase,values:Object.fromEntries(new FormData(form))};state.records[c.audit_id]=r;persist();}
+function render(){
+ $('#reviewer').value=state.reviewer||'';$('#exposure').value=state.exposure||'';
+ for(const id of ['reviewer','exposure','identity'])$('#'+id).disabled=!!state.reviewer||fatal;
+ $('#progress').textContent=`已完成 ${Object.values(state.records).filter(r=>r.c).length} / 24 题`;
+ $('#case').replaceChildren();DATA.cases.forEach((c,i)=>$('#case').append(new Option(c.audit_id+' · '+stageName(state.records[c.audit_id]),String(i))));$('#case').value=String(state.current);
+ $('#prev').disabled=state.current===0;$('#next').disabled=state.current===23;
+ const c=DATA.cases[state.current],r=state.records[c.audit_id]||{},root=$('#workspace');root.replaceChildren();$('#step').textContent=stageName(r);
+ root.append(el('h2',c.audit_id+' · '+c.context.question));
+ const grid=el('div',undefined,'grid'),evidence=el('section',undefined,'panel evidence'),review=el('section',undefined,'panel');grid.append(evidence,review);root.append(grid);
+ evidence.append(el('h3','实际提供给生成器的证据'));
+ for(const p of c.context.evidence){evidence.append(el('div',p.chunk_id+' · '+p.section_name,'tag'),el('p',p.text,'source'));}
+ if(r.a)review.append(detail('已锁定的 A 阶段判断',r.a));
+ if(r.b)review.append(detail('已锁定的 B 阶段判断',r.b));
+ if(fatal){review.append(el('p','进度读取异常，录入已停止。','error'));return;}
+ if(r.c){review.append(el('h3','本题审阅已完成'),detail('C 阶段修订（不覆盖原判断）',r.c));showReveal(review,c);return;}
+ const form=el('form');form.id='stage-form';const phase=r.b?'c':r.a?'b':'a';form.dataset.phase=phase;
+ const pending=r.pending?.phase===phase?r.pending.values:{};
+ const f=(name,label,choices)=>field(form,name,label,choices,pending[name]||'');
+ if(phase==='a'){
+  review.append(el('h3','A · 先确定问题需要什么'));
+  f('requirements','必须回答哪些信息？对象、范围或单位是什么？');
+  f('sufficiency','当前证据是否充分？',[['sufficient','充分'],['insufficient','不足'],['ambiguous','题意或范围含糊']]);
+  f('reason','依据、缺少的信息及证据 ID');
+ }else if(phase==='b'){
+  review.append(el('h3','B · 评价匿名草稿'));
+  for(const alias of ['A','B']){
+   const draft=c.drafts[alias];form.append(el('h3','版本 '+alias,'draft'));
+   if(!draft.answerable){form.append(el('p','生成器直接弃答；没有可评分的回答草稿。','notice'));f(alias+'_abstention','在当前证据下，弃答是否合理？',yn);}
+   else{draft.claims.forEach((claim,i)=>{form.append(el('p',`${i+1}. ${claim.text}`));for(const ref of claim.evidence)form.append(el('blockquote',ref.chunk_id+'\n'+ref.quote));});
+    f(alias+'_supported','实质结论是否都受各自引用支持？',yn);f(alias+'_direct','是否答到了所问信息？',[...yn,['partial','部分答到']]);f(alias+'_complete','是否覆盖必要要求？',yn);f(alias+'_action','按实际草稿应如何处理？',actions);
+   }
+   f(alias+'_reason','该版本的理由与证据 ID（不要代写草稿没说的限定）');
+  }
+ }else{
+  review.append(el('h3','C · 对照原记录，保留分歧'));showReveal(review,c);
+  f('changed','看过原标注后，是否修订判断？',[['no','不修订'],['yes','修订，原判断保留'],['uncertain','需要进一步裁定']]);
+  for(const alias of ['A','B'])f(alias+'_final',c.drafts[alias].answerable?'版本 '+alias+'：最终发布行动':'版本 '+alias+'：最终弃答合理性',c.drafts[alias].answerable?actions:yn);
+  f('reason','说明保持或修订的理由、证据位置和仍未解决的分歧');
+ }
+ const button=el('button',phase==='a'?'保存 A，查看草稿':phase==='b'?'保存 B，解盲对照':'完成本题并保存');button.type='submit';button.style.marginTop='18px';form.append(button);review.append(form);
+ form.oninput=saveDraft;form.onchange=saveDraft;
+ form.onsubmit=event=>{
+  event.preventDefault();if(!identityReady())return;const values=readForm(form);if(!values)return;
+  // Partial publication must be an explicit judgment, not a default for missing text.
+  if(phase==='b')for(const alias of ['A','B'])if(values[alias+'_action']==='full'&&['supported','direct','complete'].some(k=>values[alias+'_'+k]!=='yes')){message('完整发布与该版本的事实支持、目标或完整性判断冲突，请核对；也可以保留不确定。',true);return;}
+  if(phase==='b')for(const alias of ['A','B'])if(values[alias+'_action']==='bounded_partial'&&(values[alias+'_supported']!=='yes'||!['yes','partial'].includes(values[alias+'_direct']))){message('有界部分发布仍要求已回答的实质结论有依据，并至少部分答到目标，请核对。',true);return;}
+  const record=state.records[c.audit_id]||{};if(record[phase])throw Error('已冻结阶段不可覆盖');
+  record[phase]={saved_at:now(),values};delete record.pending;
+  if(phase==='b')record.revealed_at=now();state.records[c.audit_id]=record;persist();render();
+ };
+}
+function showReveal(root,c){
+ const reveal=c.reveal;root.append(el('p','以下是原记录，不是裁决。允许与数据集标注或原核验不同意；修订另记。','notice'));
+ root.append(detail('版本、状态与原核验判决',{mapping:reveal.arm_mapping,arms:reveal.arms}));
+ for(const [i,a] of reveal.annotations.entries())root.append(detail('数据集标注 '+(i+1),{unanswerable:a.unanswerable,yes_no:a.yes_no,extractive_spans:a.extractive_spans,free_form_answer:a.free_form_answer,evidence:a.evidence,matched_chunk_ids:a.matched_chunk_ids}));
+ root.append(detail('候选顺序与实际上下文',{candidate_ids:reveal.candidate_ids,context_ids:reveal.context_ids}));
+}
+$('#identity').onclick=()=>{if(fatal)return;const name=$('#reviewer').value.trim(),exposure=$('#exposure').value;if(!name||!exposure){message('请填写代号，并选择之前是否看过相关材料。',true);return;}state.reviewer=name;state.exposure=exposure;state.identity_saved_at=now();persist();render();};
+function navigate(index){saveDraft();state.current=index;persist();render();}
+$('#prev').onclick=()=>navigate(Math.max(0,state.current-1));$('#next').onclick=()=>navigate(Math.min(23,state.current+1));$('#case').onchange=e=>navigate(Number(e.target.value));
+$('#export').onclick=()=>{
+ if(fatal){message('进度异常时不导出空记录覆盖备份，请先排查。',true);return;}saveDraft();
+ const result={schema:state.schema,source:state.source,reviewer:state.reviewer,exposure:state.exposure,identity_saved_at:state.identity_saved_at,source_manifest_sha256:DATA.source_manifest_sha256,rubric_sha256:DATA.rubric_sha256,packet_sha256:DATA.packet_sha256,exported_at:now(),completed_questions:Object.values(state.records).filter(r=>r.c).length,identity_verification:'not_verified',cases:DATA.cases.map(c=>({audit_id:c.audit_id,question_id:c.question_id,status:state.records[c.audit_id]?.c?'completed':'pending',review:state.records[c.audit_id]||null}))};
+ const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='human-trace-review-'+new Date().toISOString().replaceAll(':','-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('已发起备份下载；请确认浏览器已保存。没有上传或写回业务系统。');
+};
+window.addEventListener('beforeunload',e=>{if(storageFailed){e.preventDefault();e.returnValue='';}});
+render();
+</script>
+</html>
