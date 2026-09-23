@@ -160,7 +160,7 @@ class Repository:
                 )
 
     def list_papers(self, q: str = "", limit: int = 20, offset: int = 0, sort: str = "id_asc",
-                    direction: str = "all") -> dict:
+                    direction: str = "all", allowed_paper_ids: list[str] | None = None) -> dict:
         _page_bounds(limit, offset)
         orders = {
             "id_asc": "p.paper_id ASC",
@@ -182,6 +182,10 @@ class Repository:
         clause = ("p.in_current_corpus AND v.state='active' AND strpos(lower(v.title),lower(%s))>0 "
                   "AND (%s='all' OR m.research_direction=%s)")
         parameters = (q, direction, direction)
+        if allowed_paper_ids is not None:
+            # Scope both rows and total in SQL, before pagination. [] denies all.
+            clause += " AND p.paper_id=ANY(%s)"
+            parameters += (allowed_paper_ids,)
         with self.connect() as conn:
             conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             total = conn.execute("SELECT count(*) AS n " + join + "WHERE " + clause,
@@ -223,17 +227,39 @@ class Repository:
             items = [r["paragraph_payload"] for r in rows]
         return {"items": items, "total": total, "limit": limit, "offset": offset}
 
-    def summary(self) -> dict:
+    def summary(self, allowed_paper_ids: list[str] | None = None) -> dict:
         with self.connect() as conn:
             conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             row = conn.execute("SELECT revision,manifest_sha256,paper_count,paragraph_count,published_at "
                                "FROM corpus_state WHERE singleton").fetchone()
-            objects = conn.execute("SELECT state,count(*) AS count FROM stored_objects GROUP BY state").fetchall()
-            metadata = conn.execute(
-                "SELECT count(*) FILTER (WHERE arxiv_submitted_at IS NOT NULL) AS submitted_dates,"
-                "count(*) FILTER (WHERE ccf_level IS NOT NULL) AS ccf_venues,"
-                "count(*) FILTER (WHERE research_direction IS NOT NULL) AS categorized FROM paper_metadata"
-            ).fetchone()
+            if allowed_paper_ids is None:
+                objects = conn.execute("SELECT state,count(*) AS count FROM stored_objects GROUP BY state").fetchall()
+                metadata = conn.execute(
+                    "SELECT count(*) FILTER (WHERE arxiv_submitted_at IS NOT NULL) AS submitted_dates,"
+                    "count(*) FILTER (WHERE ccf_level IS NOT NULL) AS ccf_venues,"
+                    "count(*) FILTER (WHERE research_direction IS NOT NULL) AS categorized FROM paper_metadata"
+                ).fetchone()
+            else:
+                join = ("FROM papers p JOIN paper_versions v ON v.version_id=p.current_version_id ")
+                clause = "WHERE p.in_current_corpus AND v.state='active' AND p.paper_id=ANY(%s)"
+                parameters = (allowed_paper_ids,)
+                counts = conn.execute(
+                    "SELECT count(DISTINCT p.paper_id) AS paper_count,count(x.chunk_id) AS paragraph_count "
+                    + join + "LEFT JOIN paragraphs x ON x.version_id=v.version_id " + clause, parameters,
+                ).fetchone()
+                # The corpus fingerprint includes inaccessible papers; do not expose it.
+                row = {**row, **counts, "manifest_sha256": None}
+                objects = conn.execute(
+                    "SELECT o.state,count(DISTINCT o.object_key) AS count " + join
+                    + "JOIN stored_objects o ON o.object_key=v.object_key " + clause + " GROUP BY o.state",
+                    parameters,
+                ).fetchall()
+                metadata = conn.execute(
+                    "SELECT count(*) FILTER (WHERE m.arxiv_submitted_at IS NOT NULL) AS submitted_dates,"
+                    "count(*) FILTER (WHERE m.ccf_level IS NOT NULL) AS ccf_venues,"
+                    "count(*) FILTER (WHERE m.research_direction IS NOT NULL) AS categorized " + join
+                    + "LEFT JOIN paper_metadata m ON m.paper_id=p.paper_id " + clause, parameters,
+                ).fetchone()
         states = {r["state"]: r["count"] for r in objects}
         return {**serializable(row), "papers": row["paper_count"], "paragraphs": row["paragraph_count"],
                 "objects": states.get("published", 0), "object_states": states,

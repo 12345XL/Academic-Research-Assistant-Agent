@@ -34,11 +34,33 @@ export interface Citation extends Paragraph { rank: number; score: number }
 export interface Page<T> { total: number; items: T[] }
 export interface RunRecord {
   trace_id: string;
-  state: 'completed' | 'abstained' | 'blocked' | 'failed';
-  reason: string;
-  terminal_stage: string;
-  latency_ms: number;
-  stages: { name: string; status: 'completed' | 'stopped' | 'failed' | 'not_run'; latency_ms: number | null }[];
+  state: 'running' | 'interrupted' | 'completed' | 'abstained' | 'blocked' | 'failed';
+  reason: string | null;
+  terminal_stage: string | null;
+  latency_ms?: number | null;
+  limits?: RunLimits;
+  budget?: { model_calls: number; completion_tokens_reserved: number; reported_prompt_tokens: number; reported_completion_tokens: number; usage_unknown_calls: number };
+  attempts?: { name: string; status: string; latency_ms: number | null; attempt: number }[];
+  stages: { name: string; status: 'running' | 'completed' | 'stopped' | 'failed' | 'not_run'; latency_ms: number | null }[];
+}
+export interface RunLimits {
+  deadline_seconds: number;
+  max_model_calls: number;
+  max_prompt_chars: number;
+  max_completion_tokens: number;
+  max_repairs: number;
+}
+export interface StoredRun {
+  run_id: string;
+  paper_id: string;
+  state: RunRecord['state'];
+  reason: string | null;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+  cancel_requested: boolean;
+  snapshot: { run?: RunRecord; generation?: Retrieval['generation'] };
+  metadata: Record<string, unknown>;
 }
 export interface Retrieval {
   trace_id: string;
@@ -46,16 +68,18 @@ export interface Retrieval {
   paper_id: string;
   top_k: number;
   mode?: 'evidence_only' | 'grounded_answer';
-  status: 'evidence_found' | 'no_lexical_match' | 'no_evidence' | 'answered' | 'evidence_insufficient' | 'not_configured' | 'verification_failed' | 'model_unavailable' | 'model_refused';
+  status: 'evidence_found' | 'no_lexical_match' | 'no_evidence' | 'answered' | 'evidence_insufficient' | 'not_configured' | 'verification_failed' | 'model_unavailable' | 'model_refused' | 'run_stopped';
   claims?: { text: string; evidence: { chunk_id: string; quote: string }[] }[];
   generation?: { prompt_version?: string; answer_language?: string; model_calls: number; latency_ms: number; checks: { citation_integrity: string; semantic_support: string } };
   citations: Citation[];
   notice: string;
-  trace: { rrf_constant?: number; dense_weight?: number; rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
+  trace: { rrf_constant?: number; dense_weight?: number; rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs?: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
   run?: RunRecord;
 }
 
 export interface System {
+  access?: { mode: 'local_public' | 'bearer_policy'; principal_id?: string };
+  harness?: { limits: RunLimits; persistence: 'postgres' | 'memory' };
   stage: string;
   mode: string;
   database: { status: string };
@@ -98,10 +122,16 @@ export class ApiError extends Error {
   }
 }
 
+// Held only in this page's memory; never written to URLs or browser storage.
+let accessToken = '';
+export function setAccessToken(value: string): void { accessToken = value.trim(); }
+
 async function checkedFetch(path: string, options?: RequestInit): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(path, options);
+    const headers = new Headers(options?.headers);
+    if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+    response = await fetch(path, { ...options, headers });
   } catch (error) {
     if (isAbort(error)) throw error;
     throw new Error('无法连接后端服务，请确认服务已启动后重试。');

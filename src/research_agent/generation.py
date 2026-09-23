@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .service import CorpusChangedError, CorpusIntegrityError
 from .harness import AnswerRun, TERMINAL_STATES, exception_reason
+from .runtime import RunControl, RunLimits, RunStopped, model_messages
 
 CONTEXT_CHAR_LIMIT = 24_000
 PROMPT_VERSION = "paper-claims-v1"
@@ -142,21 +143,19 @@ class DeepSeekClient:
         self.settings = settings
         self.transport = transport
 
-    def complete(self, system: str, payload: dict, schema: type[StrictModel]):
+    def complete(self, system: str, payload: dict, schema: type[StrictModel], *, timeout_seconds=45, max_completion_tokens=2048):
         started = time.perf_counter()
         # JSON mode guarantees syntax, not schema. Validate locally below.
-        messages = [{"role": "system", "content": system + "\nReturn JSON only, conforming to this schema: "
-                     + json.dumps(schema.model_json_schema(), ensure_ascii=False)},
-                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]
+        messages = model_messages(system, payload, schema)
         meta = {"requested_model": self.settings.model}
         try:
-            with httpx.Client(transport=self.transport, timeout=httpx.Timeout(45, connect=5),
+            with httpx.Client(transport=self.transport, timeout=httpx.Timeout(min(45, timeout_seconds), connect=min(5, timeout_seconds)),
                               follow_redirects=False) as client:
                 response = client.post("https://api.deepseek.com/chat/completions",
                     headers={"Authorization": "Bearer " + self.settings.api_key},
                     json={"model": self.settings.model, "messages": messages,
                           "response_format": {"type": "json_object"}, "thinking": {"type": "disabled"},
-                          "temperature": 0, "max_tokens": 2048, "stream": False})
+                          "temperature": 0, "max_tokens": max_completion_tokens, "stream": False})
             if response.status_code != 200:
                 raise ModelFailure("provider_http_error", {"http_status": response.status_code})
             body = response.json()
@@ -245,6 +244,7 @@ NOTICES = {
     "verification_failed": "草稿未通过引用或支持关系核验，已拦截；请查看原文或调整问题。",
     "model_unavailable": "模型服务或输出暂不可用，当前仅展示证据；这不是论文不可回答的判断。",
     "model_refused": "模型服务拒绝了本次生成请求，当前仅展示证据；这不是证据不足的判断。",
+    "run_stopped": "本次运行已因时间、预算或取消要求停止，未发布回答。",
 }
 
 
@@ -265,26 +265,28 @@ def select_context(citations):
 
 
 class AnswerService:
-    def __init__(self, settings: GenerationSettings, client=None, profile="v1"):
+    def __init__(self, settings: GenerationSettings, client=None, profile="v1", limits=None):
         if profile not in {"v1", "v2"}:
             raise ValueError("Unknown generation profile")
+        self.limits = limits or RunLimits()
         self.profile = profile
         self.settings = settings
         self.client = client or DeepSeekClient(settings)
         self._lock = threading.Lock()
 
     def answer(self, evidence_service, query, paper_id, top_k=5, mode="bm25", rerank=False, *,
-               language="zh", rrf_constant=60, dense_weight=0.5):
+               language="zh", rrf_constant=60, dense_weight=0.5, allow_repair=False, run=None, trace=None):
         if language not in {"zh", "en"}:
             raise ValueError("Unknown answer language")
         if not self._lock.acquire(blocking=False):
             raise GenerationBusyError("已有回答正在运行，请完成后再试")
-        run, trace = AnswerRun(), {}
+        run = run or AnswerRun(control=RunControl(self.limits.for_request(allow_repair)))
+        trace = {} if trace is None else trace
         try:
             return self._answer(evidence_service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight, run, trace)
         except Exception as exc:
             # Keep the original exception type/HTTP contract while retaining this run.
-            exc.answer_run = run.finish(exception_reason(exc))
+            exc.answer_run = run.abort(exception_reason(exc))
             if trace:
                 trace["model_calls"] = len(trace["calls"])
                 trace["latency_ms"] = exc.answer_run["latency_ms"]
@@ -296,8 +298,13 @@ class AnswerService:
     def _answer(self, service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight, run, trace):
         run.enter("retrieve")
         persistent = hasattr(service, "repository")
-        result = service.retrieve(query, paper_id, top_k, **({"mode": mode, "rerank": rerank, "rrf_constant": rrf_constant, "dense_weight": dense_weight} if persistent else {}))
-        run.trace_id = result["trace_id"]
+        control = run.control
+        result = control.invoke("retrieve", lambda: service.retrieve(query, paper_id, top_k,
+            **({"mode": mode, "rerank": rerank, "rrf_constant": rrf_constant, "dense_weight": dense_weight} if persistent else {})))
+        if run.fixed_id:
+            result["trace_id"] = run.trace_id
+        else:
+            run.trace_id = result["trace_id"]
         run.enter("context")
         selected, budget = select_context(result["citations"])
         trace.update({"prompt_version": "paper-claims-" + self.profile, "answer_language": language, "context": budget, "calls": [],
@@ -306,6 +313,8 @@ class AnswerService:
         result.update(mode="grounded_answer", claims=[], generation=trace)
 
         def finish(status, reason):
+            trace["model_calls"] = len(trace["calls"])
+            trace["latency_ms"] = run.snapshot()["latency_ms"]
             result.update(status=status, notice=NOTICES[status], run=run.finish(reason))
             trace["latency_ms"] = result["run"]["latency_ms"]
             trace["model_calls"] = len(trace["calls"])
@@ -323,15 +332,36 @@ class AnswerService:
                    "evidence": [{k: c[k] for k in ("chunk_id", "section_name", "text")} for c in selected]}
 
         def call(stage, prompt, data, schema):
+            chars = control.reserve_model(prompt, data, schema)
             started = time.perf_counter()
+            entry = {"stage": stage, "status": "started", "attempt": run.attempt,
+                     "prompt_chars": chars, "max_completion_tokens": control.limits.max_completion_tokens}
+            with run.lock:
+                run.check()
+                trace["calls"].append(entry)
+                trace["model_calls"] = len(trace["calls"])
+                run.emit()  # Reservation is durable before any paid request.
             try:
-                parsed, meta = self.client.complete(prompt, data, schema)
-                meta.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
-                trace["calls"].append({"stage": stage, "status": "completed", **meta})
+                def complete():
+                    if isinstance(self.client, DeepSeekClient):
+                        return self.client.complete(prompt, data, schema, timeout_seconds=control.remaining(),
+                                                    max_completion_tokens=control.limits.max_completion_tokens)
+                    return self.client.complete(prompt, data, schema)
+                parsed, meta = control.invoke(stage, complete)
+                with run.lock:
+                    run.check()
+                    meta.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
+                    entry.update(meta, status="completed")
+                    control.account(meta)
+                    run.emit()
                 return parsed
             except ModelFailure as exc:
-                exc.metadata.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
-                trace["calls"].append({"stage": stage, "status": exc.code, **exc.metadata})
+                with run.lock:
+                    run.check()
+                    exc.metadata.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
+                    entry.update(exc.metadata, status=exc.code)
+                    control.account(exc.metadata)
+                    run.emit()
                 raise
 
         def revalidate():
@@ -339,6 +369,7 @@ class AnswerService:
             if not persistent:
                 trace["publication_check"] = "immutable_file_snapshot"
                 return
+            control.check()
             repo = service.repository
             revision = result["trace"]["corpus_revision"]
             if str(repo.revision()) != revision:
@@ -352,6 +383,7 @@ class AnswerService:
                     raise CorpusIntegrityError("Evidence text changed")
             if str(repo.revision()) != revision:
                 raise CorpusChangedError("Corpus changed during publication check")
+            control.check()
             trace["publication_check"] = "database_revision_and_hash"
 
         try:
@@ -360,39 +392,56 @@ class AnswerService:
                 prompt = prompt.replace("in Chinese", "in English")
             prompt += "\nWrite your answer in " + ("Chinese." if language == "zh" else "English.")
             run.enter("generate")
-            draft = call("generate", prompt, payload, Draft if self.profile == "v1" else GroundedDraft)
-            if not draft.answerable:
-                revalidate()
-                return finish("evidence_insufficient", "generator_abstained")
-            trace["draft_sha256"] = digest(draft.model_dump())
-            run.enter("citation_check")
-            by_id = {c["chunk_id"]: c for c in selected}
-            for claim in draft.claims:
-                for ref in claim.evidence:
-                    if ref.chunk_id not in by_id or not ref.quote.strip() or ref.quote not in by_id[ref.chunk_id]["text"]:
-                        trace["checks"]["citation_integrity"] = "failed"
-                        return finish("verification_failed", "citation_invalid")
-            trace["checks"]["citation_integrity"] = "passed"
-            # Only each claim's own cited full paragraphs are given to its judge.
-            cited_ids = {ref.chunk_id for claim in draft.claims for ref in claim.evidence}
-            verification_payload = {"question": query, "claims": [
-                {"claim_index": i, **claim.model_dump()} for i, claim in enumerate(draft.claims)],
-                "cited_paragraphs": [{"chunk_id": c["chunk_id"], "text": c["text"]}
-                                     for c in selected if c["chunk_id"] in cited_ids]}
-            run.enter("verify")
-            verification = call("verify", VERIFIER_PROMPT if self.profile == "v1" else VERIFIER_V2,
-                                verification_payload, Verification if self.profile == "v1" else DetailedVerification)
-            passed = verification_passed(draft, verification, by_id)
-            trace["checks"]["semantic_support"] = "passed" if passed else "failed"
-            if not passed:
-                return finish("verification_failed", "semantic_verification_failed")
-            revalidate()
+            generation_payload = payload
+            while True:
+                draft = call("generate", prompt, generation_payload, Draft if self.profile == "v1" else GroundedDraft)
+                if not draft.answerable:
+                    control.invoke("publication_check", revalidate)
+                    return finish("evidence_insufficient", "generator_abstained")
+                trace["draft_sha256"] = digest(draft.model_dump())
+                run.enter("citation_check")
+                by_id = {c["chunk_id"]: c for c in selected}
+                valid = all(ref.chunk_id in by_id and ref.quote.strip() and ref.quote in by_id[ref.chunk_id]["text"]
+                            for claim in draft.claims for ref in claim.evidence)
+                trace["checks"]["citation_integrity"] = "passed" if valid else "failed"
+                failed_reason = "citation_invalid"
+                if valid:
+                    cited_ids = {ref.chunk_id for claim in draft.claims for ref in claim.evidence}
+                    verification_payload = {"question": query, "claims": [
+                        {"claim_index": i, **claim.model_dump()} for i, claim in enumerate(draft.claims)],
+                        "cited_paragraphs": [{"chunk_id": c["chunk_id"], "text": c["text"]}
+                                             for c in selected if c["chunk_id"] in cited_ids]}
+                    run.enter("verify")
+                    verification = call("verify", VERIFIER_PROMPT if self.profile == "v1" else VERIFIER_V2,
+                                        verification_payload, Verification if self.profile == "v1" else DetailedVerification)
+                    passed = verification_passed(draft, verification, by_id)
+                    trace["checks"]["semantic_support"] = "passed" if passed else "failed"
+                    if passed:
+                        break
+                    failed_reason = "semantic_verification_failed"
+                if run.attempt >= control.limits.max_repairs:
+                    return finish("verification_failed", "repair_exhausted" if run.attempt else failed_reason)
+                # One explicit correction, same evidence and scope; all gates rerun.
+                generation_payload = {**payload, "previous_draft": draft.model_dump(),
+                                      "correction": {"reason": failed_reason,
+                                          "instruction": "Revise the draft using only supplied evidence; abstain if unsupported."}}
+                trace["checks"] = {"citation_integrity": "not_run", "semantic_support": "not_run"}
+                trace.pop("verified_draft_sha256", None)
+                run.repair()
+            control.invoke("publication_check", revalidate)
             run.enter("publish")
             trace["verified_draft_sha256"] = trace["draft_sha256"]
+            # The finish guard persists and checks cancellation before publishing.
+            finish("answered", "published")
             result["claims"] = [c.model_dump() for c in draft.claims]
             if isinstance(draft, GroundedDraft):
                 result.update(short_answer=draft.short_answer, answer_type=draft.answer_type)
-            return finish("answered", "published")
+            return result
         except ModelFailure as exc:
             reason = exc.code if exc.code in TERMINAL_STATES and exc.code != "published" else "internal_error"
             return finish("model_refused" if exc.code == "model_refused" else "model_unavailable", reason)
+        except RunStopped as exc:
+            result.update(status="run_stopped", notice=NOTICES["run_stopped"], claims=[], run=run.abort(exc.code))
+            trace["model_calls"] = len(trace["calls"])
+            trace["latency_ms"] = result["run"]["latency_ms"]
+            return result

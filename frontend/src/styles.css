@@ -57,3 +57,22 @@
 .run-stages th { background: transparent; }
 .run-stages th[scope="row"] { white-space: normal; font-weight: 400; }
 .run-stages th code { display: block; color: #8c9981; margin-top: 3px; font-size: 10px; }
+
+/* Access and run history reuse the workbench's compact detail panels. */
+.access-settings { border-bottom: 1px solid var(--border); padding: 10px 38px; background: #fcfdf9; font-size: 12px; }
+.access-settings summary, .run-history > summary { cursor: pointer; color: #53694b; }
+.access-settings summary span { color: var(--muted); margin-left: 12px; font-size: 11px; }
+.access-settings form { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 12px 0; }
+.access-settings input { min-width: 200px; flex: 1; max-width: 450px; padding: 8px; border: 1px solid #cfdac1; border-radius: 5px; }
+.access-settings form p { flex-basis: 100%; color: var(--muted); line-height: 1.8; font-size: 11px; }
+.run-history { border: 1px solid var(--border); border-radius: 8px; margin-top: 18px; background: #fafcf6; font-size: 12px; }
+.run-history > summary { padding: 14px 16px; }
+.run-history-body { padding: 0 16px 16px; }
+.history-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.history-heading p { color: var(--muted); line-height: 1.8; font-size: 11px; }
+.history-items { list-style: none; margin: 10px 0; padding: 0; }
+.history-items li + li { border-top: 1px solid var(--border); }
+.history-items button { display: flex; flex-wrap: wrap; gap: 8px 15px; width: 100%; padding: 12px 0; text-align: left; font-size: 11px; color: #53694b; }
+.history-items button:hover { background: #edf2e6; }
+.run-state.interrupted { background: #f7eadd; color: #926348; }
+@media(max-width:600px) { .access-settings { padding: 10px 20px; } }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, loadContext, request } from './api';
+import { ApiError, downloadSource, loadContext, request, setAccessToken } from './api';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { setAccessToken(''); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('request failure boundaries', () => {
   it('preserves server detail without returning failed response as data', async () => {
@@ -41,5 +41,26 @@ describe('original paragraph context', () => {
   it('reports a missing citation instead of displaying unrelated context', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ total: 1, items: [{ chunk_id: 'other' }] }))));
     await expect(loadContext('paper', 'missing', new AbortController().signal)).rejects.toThrow('未找到这条证据');
+  });
+});
+
+
+describe('in-memory access credential', () => {
+  it('adds authorization to reads, posts, and source downloads without putting it in URLs', async () => {
+    const fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response('{}')));
+    vi.stubGlobal('fetch', fetch);
+    vi.stubGlobal('URL', Object.assign(class extends URL {}, { createObjectURL: () => 'blob:test', revokeObjectURL: () => {} }));
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    setAccessToken('  private-token  ');
+    await request('/api/v1/system');
+    await request('/api/v1/answer', undefined, { query: 'method' });
+    await downloadSource('p1', new AbortController().signal);
+    for (const [url, options] of fetch.mock.calls as [string, RequestInit][]) {
+      expect(url).not.toContain('private-token');
+      expect(new Headers(options.headers).get('Authorization')).toBe('Bearer private-token');
+    }
+    setAccessToken('');
+    await request('/api/v1/system');
+    expect(new Headers(fetch.mock.lastCall?.[1].headers).has('Authorization')).toBe(false);
   });
 });

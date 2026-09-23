@@ -4,11 +4,12 @@
 
 已完成 **P2B-4 参数与生成质量对照**：RRF 20 组网格仍选择 K60/等权；240 题双策略评测已完成，新版仍存在不可答题误发布，因此只作为实验选项。最新 **P2B-5** 复核了其中 24 题/48 份既有输出，发现回答目标、标注粒度和评分格式问题；新增项目模型 API 调用为 0，独立人工审阅待完成，未改变在线策略。详见下方报告。
 
-当前回到核心工程：**P3-1 显式阶段流与统一终止原因**，在原问答工作台查看请求结束后的运行记录。人工审阅扩展暂停，24 题标注不是继续开发前提；P2B 质量问题继续保留。
+当前已完成 **P3 指定论文、单实例 Harness 工程**：Python 显式状态机、任务时限与调用预算、服务端论文授权、运行元数据持久化、取消与重启中断、一次可选修正及重新核验。继续使用原问答工作台；默认不修正，未配置授权策略时明确为本机公共语料。人工审阅扩展暂停，24 题标注不是继续开发前提；P2B 质量问题继续保留。
 
 ## 先看什么
 
-- [P3-1 运行状态与学习路线](docs/P3-1运行状态与学习路线.md)：当前链路、已有 Harness 能力、阶段控制、失败原因和历史调用讲解。
+- [P3 验收与学习路线](docs/P3验收与学习路线.md)：当前链路、预算/权限/持久化/修正实现、295 项后端与 37 项前端工程测试、学习顺序与简历表述。
+- [P3-1 运行状态与学习路线](docs/P3-1运行状态与学习路线.md)：第一步增量的历史盘点、阶段控制、失败原因和旧调用讲解。
 - [P2B-6 人工审阅口径与操作](docs/P2B-6人工审阅口径与操作.md)：本地分阶段复核页面、部分回答口径与未完成的人工裁定。
 - [P2B-5 轨迹审阅结果与决策](docs/P2B-5轨迹审阅结果与决策.md)：真实失败诊断、审阅不确定性、下一步假设及停止条件。
 - [P2B-5 冻结审阅协议](docs/P2B-5轨迹审阅协议.md)：抽样、分阶段记录、标签来源与统计分母。
@@ -58,7 +59,9 @@ npm --prefix frontend ci
 
 `mps` 用于 Apple GPU；其他设备先用 `--device cpu`。API 默认 CPU 推理，可用环境变量 `RESEARCH_EMBEDDING_DEVICE=mps` 选择向量编码设备，`RESEARCH_RERANKER_DEVICE` 单独选择重排设备。论文导入或换版后重新运行索引脚本；同版本完整索引会复用，未完成任务会继续。没有向量模型仍可使用 BM25。
 
-需要生成回答时，在本机 `.env` 添加 `DEEPSEEK_API_KEY`，设置 `DEEPSEEK_MODEL=deepseek-flash` 和 `RESEARCH_GENERATION_ENABLED=true` 后重启 API。密钥仅在后端使用；不要放进前端 VITE 环境变量或提交到仓库。未配置仍可检索。生成会产生模型 API 费用，每题最多两次请求；页面默认保持证据检索模式。
+需要生成回答时，在本机 `.env` 添加 `DEEPSEEK_API_KEY`，设置 `DEEPSEEK_MODEL=deepseek-flash` 和 `RESEARCH_GENERATION_ENABLED=true` 后重启 API。密钥仅在后端使用；不要放进前端 VITE 环境变量或提交到仓库。未配置仍可检索。生成会产生模型 API 费用，默认每题最多两次请求；显式开启一次修正后最多四次，仍受服务端预算约束。页面默认保持证据检索模式。
+
+已有数据升级 P3 时先执行 `.venv/bin/python scripts/migrate_database.py`，只更新表结构，无需重新导入或重建索引。授权文件格式及预算配置见 P3 文档与 `.env.example`。PostgreSQL 运行存储限制单 worker，不能同时启动多个 API 实例。
 
 在两个终端分别启动：
 
@@ -74,8 +77,8 @@ npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173
 ## 验证
 
 ```bash
-.venv/bin/python -m pytest -q
-RUN_STORAGE_INTEGRATION=1 .venv/bin/python -m pytest -q
+PYTHONPATH=src .venv/bin/python -m pytest -q
+RUN_STORAGE_INTEGRATION=1 PYTHONPATH=src .venv/bin/python -m pytest -q
 npm --prefix frontend test
 npm --prefix frontend run build
 .venv/bin/python scripts/verify_workbench.py
@@ -110,6 +113,9 @@ npm --prefix frontend run build
 frontend/src/               React + TypeScript 工作台
 src/research_agent/
   api.py                     FastAPI 契约与错误状态
+  harness.py / runtime.py     显式阶段流、时限、调用预算与执行约束
+  access.py / run_store.py    服务端论文授权、运行元数据与重启中断
+  generation.py              草稿、引用检查、语义核验与一次可选修正
   service.py                 三种检索路线、数据库事实回查与版本刷新
   embeddings.py              固定本地模型、token 窗口与归一化编码
   reranking.py               问题-段落联合评分、长度预算与窗口聚合
@@ -117,7 +123,7 @@ src/research_agent/
   storage.py                 PostgreSQL 与 S3 适配器
   ingestion.py               白名单数据校验、对象写入与版本发布
   paper_metadata.py          arXiv 主分类方向映射与 CCF 发表载体规则
-  migrations/                正文与浏览元数据数据库结构
+  migrations/                正文、浏览元数据与运行记录数据库结构
   dataset.py / retrieval.py  QASPER 准备与 P1 BM25 基线
 scripts/                     本地服务、导入、API 与回归入口
 tests/                       单元和真实存储集成测试
@@ -125,6 +131,6 @@ tests/                       单元和真实存储集成测试
 
 方向筛选和排序由 PostgreSQL 在分页前执行。方向是对 arXiv 官方主分类的确定性聚合，不根据标题猜测；时间字段取自 arXiv API 的首次提交时间，不是期刊出版时间；CCF 标签来自 arXiv `journal_ref` 与 CCF 官方目录的保守匹配，只表示发表载体目录级别。原论文 PDF 由 arXiv 官方链接提供，未复制进对象存储；对象存储中的结构化正文仍会单独做哈希校验。来源、刷新方式和限制见[数据契约](docs/DATASET.md)。
 
-当前是本机单实例研发环境；没有个人 PDF 上传、模型答案、答案支持关系核验、跨论文问答、用户权限、分层记忆、反馈自动部署。它们在后续阶段逐项实现并验收。QASPER 结构化正文可定位到章节和段落，不代表已定位到 PDF 页码。
+当前是本机单实例研发环境，已接入模型回答、引用和支持关系核验，以及可选 Bearer 论文授权；模型核验通过仍不保证回答正确。尚无个人 PDF 上传、跨论文问答、完整账号/组织管理、分层记忆或反馈自动部署。运行历史只保存元数据，不自动恢复付费调用。QASPER 结构化正文可定位到章节和段落，不代表已定位到 PDF 页码。
 
 QASPER: Dasigi et al. (2021), [A Dataset of Information-Seeking Questions and Answers Anchored in Research Papers](https://aclanthology.org/2021.naacl-main.365/)。[官方数据卡](https://huggingface.co/datasets/allenai/qasper)标注 CC BY 4.0。个人论文和原项目附件未随仓库发布。

@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import type { RunRecord } from './api';
+import type { RunRecord, StoredRun } from './api';
 
 const papers = [
   { paper_id: 'p1', title: 'First paper title', abstract: 'First abstract', source: 'qasper', split: 'train', version: 'v1', arxiv_primary_category: 'cs.CL', research_direction: 'nlp', research_direction_label: '自然语言处理', arxiv_pdf_url: 'https://arxiv.org/pdf/2001.00001v1' },
@@ -349,4 +349,146 @@ it('sends the explicitly selected v2 strategy and English language',async()=>{
   fireEvent.click(screen.getByRole('button',{name:'生成并核验回答'}));
   await screen.findByText('已核验的结论');
   expect(submitted).toMatchObject({profile:'v2',language:'en'});
+});
+
+
+const storedRun: StoredRun = {
+  run_id: '0123456789abcdef0123456789abcdef', paper_id: 'p1', state: 'completed', reason: 'published',
+  revision: 8, created_at: '2026-09-23T12:00:00Z', updated_at: '2026-09-23T12:01:00Z', cancel_requested: false,
+  snapshot: { run: completedRun }, metadata: {},
+};
+
+describe('controlled answer execution', () => {
+  it('sends a client run id and leaves repair disabled unless explicitly selected', async () => {
+    const fetch = setupAnswer(answered); render(<App />); await submitAnswer();
+    await screen.findByText('已核验的结论');
+    let body = JSON.parse(String(fetch.mock.calls.find(call => call[0] === '/api/v1/answer')?.[1].body));
+    expect(body.run_id).toMatch(/^[a-f0-9]{32}$/);
+    expect(body.allow_repair).toBe(false);
+    fireEvent.click(screen.getByText('实验设置'));
+    fireEvent.click(screen.getByRole('checkbox', { name: '允许一次修复并重新核验' }));
+    fireEvent.click(screen.getByRole('button', { name: '生成并核验回答' }));
+    await screen.findByText('已核验的结论');
+    const answers = fetch.mock.calls.filter(call => call[0] === '/api/v1/answer');
+    body = JSON.parse(String(answers[1][1].body));
+    expect(body.allow_repair).toBe(true);
+    expect(body.run_id).not.toBe(JSON.parse(String(answers[0][1].body)).run_id);
+  });
+
+  it('requests server cancellation for the same run before stopping the wait', async () => {
+    let signal: AbortSignal | null = null;
+    let finishCancel: (response: Response) => void = () => {};
+    const fetch = setupAnswer((options: RequestInit) => { signal = options.signal || null; return new Promise(() => {}); });
+    const base = fetch.getMockImplementation()!;
+    fetch.mockImplementation((url, options) => url.endsWith('/cancel') ? new Promise(resolve => { finishCancel = resolve; }) : base(url, options));
+    render(<App />); await submitAnswer();
+    const body = JSON.parse(String(fetch.mock.calls.find(call => call[0] === '/api/v1/answer')?.[1].body));
+    fireEvent.click(screen.getByRole('button', { name: '取消生成' }));
+    expect(fetch.mock.calls.some(call => call[0] === `/api/v1/runs/${body.run_id}/cancel` && call[1].method === 'POST')).toBe(true);
+    expect(signal!.aborted).toBe(false);
+    await act(async () => finishCancel(json({ ...storedRun, run_id: body.run_id, state: 'running', reason: '', cancel_requested: true, snapshot: {} })));
+    expect(signal!.aborted).toBe(true);
+    expect(await screen.findByText(/服务端已接受取消请求，已停止等待/)).toBeTruthy();
+    expect(screen.queryByText('服务端已确认运行取消。')).toBeNull();
+  });
+
+  it.each([404, 503])('does not claim cancellation or stop waiting on a %s response', async status => {
+    let signal: AbortSignal | null = null;
+    const fetch = setupAnswer((options: RequestInit) => { signal = options.signal || null; return new Promise(() => {}); });
+    const base = fetch.getMockImplementation()!;
+    fetch.mockImplementation((url, options) => url.endsWith('/cancel') ? Promise.resolve(new Response(JSON.stringify({ detail: '取消请求失败' }), { status })) : base(url, options));
+    render(<App />); await submitAnswer();
+    fireEvent.click(screen.getByRole('button', { name: '取消生成' }));
+    await screen.findByText(status === 404 ? /尚未找到运行记录，取消未获确认/ : /取消未获确认；仍在等待回答/);
+    expect(signal!.aborted).toBe(false);
+    expect(screen.getByRole('button', { name: '取消生成' })).toBeTruthy();
+    expect(screen.queryByText('服务端已确认运行取消。')).toBeNull();
+  });
+
+  it('ignores a late cancel result after an answer completed and a new run started', async () => {
+    const resolveAnswers: ((response: Response) => void)[] = [];
+    const signals: AbortSignal[] = [];
+    let finishCancel: (response: Response) => void = () => {};
+    const fetch = setupAnswer((options: RequestInit) => { signals.push(options.signal!); return new Promise(resolve => resolveAnswers.push(resolve)); });
+    const base = fetch.getMockImplementation()!;
+    fetch.mockImplementation((url, options) => url.endsWith('/cancel') ? new Promise(resolve => { finishCancel = resolve; }) : base(url, options));
+    render(<App />); await submitAnswer();
+    fireEvent.click(screen.getByRole('button', { name: '取消生成' }));
+    await act(async () => resolveAnswers[0](json(answered)));
+    await screen.findByText('已核验的结论');
+    fireEvent.click(screen.getByRole('button', { name: '生成并核验回答' }));
+    await act(async () => finishCancel(json({ ...storedRun, state: 'running', cancel_requested: true, snapshot: {} })));
+    expect(signals[1].aborted).toBe(false);
+    expect(screen.getByRole('button', { name: '取消生成' })).toBeTruthy();
+    expect(screen.queryByText(/服务端已接受取消请求/)).toBeNull();
+  });
+
+  it('renders budget limits and repeated attempts separately from reported usage', async () => {
+    const run: RunRecord = { ...completedRun, state: 'failed', reason: 'call_budget_exceeded',
+      limits: { deadline_seconds: 90, max_model_calls: 3, max_prompt_chars: 30000, max_completion_tokens: 2400, max_repairs: 1 },
+      budget: { model_calls: 3, completion_tokens_reserved: 2400, reported_prompt_tokens: 2000, reported_completion_tokens: 200, usage_unknown_calls: 1 },
+      attempts: [{ name: 'generate', status: 'completed', latency_ms: 30, attempt: 0 }, { name: 'generate', status: 'completed', latency_ms: 20, attempt: 1 }],
+    };
+    setupAnswer({ ...answered, status: 'model_unavailable', claims: [], run }); render(<App />); await submitAnswer();
+    fireEvent.click(await screen.findByText('运行记录'));
+    expect(screen.getByText('模型调用次数预算已用尽')).toBeTruthy();
+    expect(screen.getByText(/有 1 次调用未返回用量，以上用量不完整/)).toBeTruthy();
+    expect(within(screen.getByRole('table', { name: '阶段尝试记录' })).getAllByText('生成回答')).toHaveLength(2);
+    expect(screen.queryByText('已核验的结论')).toBeNull();
+  });
+});
+
+describe('run history and identity boundaries', () => {
+  it('only loads history on demand and clears it when changing paper', async () => {
+    const fetch = setupFetch(); const base = fetch.getMockImplementation()!;
+    fetch.mockImplementation((url, options) => url.startsWith('/api/v1/runs?') ? Promise.resolve(json({ items: [storedRun] })) : url === `/api/v1/runs/${storedRun.run_id}` ? Promise.resolve(json(storedRun)) : base(url, options));
+    render(<App />); await screen.findByRole('heading', { level: 1, name: papers[0].title });
+    expect(fetch.mock.calls.some(call => call[0].startsWith('/api/v1/runs'))).toBe(false);
+    fireEvent.click(screen.getByText('当前论文的最近运行'));
+    fireEvent.click(screen.getByRole('button', { name: '刷新运行记录' }));
+    fireEvent.click(await screen.findByRole('button', { name: `查看运行 ${storedRun.run_id}` }));
+    await screen.findByText(/这是历史运行快照，不包含答案全文/);
+    expect(fetch.mock.calls.some(call => call[0] === '/api/v1/runs?limit=20&paper_id=p1')).toBe(true);
+    expect(screen.queryByText('已核验的结论')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Second paper title/ }));
+    expect(screen.queryByText(/这是历史运行快照/)).toBeNull();
+    expect(screen.queryByRole('button', { name: `查看运行 ${storedRun.run_id}` })).toBeNull();
+  });
+
+  it('aborts old requests and clears prior identity data before reloading with an in-memory credential', async () => {
+    let finishAnswer: (response: Response) => void = () => {};
+    let signal: AbortSignal | null = null;
+    const fetch = setupAnswer((options: RequestInit) => { signal = options.signal || null; return new Promise(resolve => { finishAnswer = resolve; }); });
+    const base = fetch.getMockImplementation()!;
+    fetch.mockImplementation((url, options) => new Headers(options.headers).has('Authorization') ? new Promise(() => {}) : base(url, options));
+    render(<App />); await submitAnswer();
+    fireEvent.click(screen.getByText('访问凭证'));
+    fireEvent.change(screen.getByLabelText('Bearer 凭证'), { target: { value: 'second-identity-token' } });
+    fireEvent.click(screen.getByRole('button', { name: '应用凭证并重载' }));
+    expect(signal!.aborted).toBe(true);
+    expect(screen.queryByRole('heading', { level: 1, name: papers[0].title })).toBeNull();
+    expect(screen.queryByText(papers[1].title)).toBeNull();
+    expect((screen.getByLabelText('Bearer 凭证') as HTMLInputElement).value).toBe('');
+    expect(Object.values(window.localStorage)).not.toContain('second-identity-token');
+    expect(window.location.href).not.toContain('second-identity-token');
+    await waitFor(() => expect(fetch.mock.calls.some(call => call[0] === '/api/v1/system' && new Headers(call[1].headers).get('Authorization') === 'Bearer second-identity-token')).toBe(true));
+    await act(async () => finishAnswer(json(answered)));
+    expect(screen.queryByText('已核验的结论')).toBeNull();
+  });
+});
+
+
+it('can open the minimal just-created run before any stage snapshot exists', async () => {
+  const firstRun: StoredRun = { ...storedRun, state: 'running', reason: null,
+    snapshot: { run: { trace_id: storedRun.run_id, state: 'running', reason: null, terminal_stage: null, stages: [], attempts: [] } },
+  };
+  const fetch = setupFetch(); const base = fetch.getMockImplementation()!;
+  fetch.mockImplementation((url, options) => url.startsWith('/api/v1/runs?') ? Promise.resolve(json({ items: [firstRun] })) : url === `/api/v1/runs/${storedRun.run_id}` ? Promise.resolve(json(firstRun)) : base(url, options));
+  render(<App />); await screen.findByRole('heading', { level: 1, name: papers[0].title });
+  fireEvent.click(screen.getByText('当前论文的最近运行'));
+  fireEvent.click(screen.getByRole('button', { name: '刷新运行记录' }));
+  fireEvent.click(await screen.findByRole('button', { name: `查看运行 ${storedRun.run_id}` }));
+  fireEvent.click(await screen.findByText('运行记录'));
+  expect(screen.getByText('运行尚未结束')).toBeTruthy();
+  expect(screen.getByText('尚未开始')).toBeTruthy();
 });
