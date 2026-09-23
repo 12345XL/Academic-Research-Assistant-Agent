@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import type { RunRecord } from './api';
 
 const papers = [
   { paper_id: 'p1', title: 'First paper title', abstract: 'First abstract', source: 'qasper', split: 'train', version: 'v1', arxiv_primary_category: 'cs.CL', research_direction: 'nlp', research_direction_label: '自然语言处理', arxiv_pdf_url: 'https://arxiv.org/pdf/2001.00001v1' },
@@ -217,6 +218,10 @@ function setupAnswer(answer: unknown | ((options: RequestInit) => Promise<Respon
 const answered = { ...evidence, mode:'grounded_answer', status:'answered', notice:'核验后发布',
   claims:[{text:'已核验的结论', evidence:[{chunk_id:'chunk1',quote:'This result'}]}],
   generation:{model_calls:2,latency_ms:1000,checks:{citation_integrity:'passed',semantic_support:'passed'}} };
+const completedRun: RunRecord = {
+  trace_id: evidence.trace_id, state: 'completed', reason: 'published', terminal_stage: 'publish', latency_ms: 1000,
+  stages: ['retrieve', 'context', 'generate', 'citation_check', 'verify', 'publication_check', 'publish'].map(name => ({ name, status: 'completed', latency_ms: 10 })),
+};
 async function submitAnswer() {
   await screen.findByRole('heading',{level:1,name:papers[0].title});
   fireEvent.change(screen.getByLabelText('任务'),{target:{value:'answer'}});
@@ -244,8 +249,75 @@ it('ignores late generated answers after switching the paper',async()=>{
   render(<App/>); await submitAnswer();
   fireEvent.click(screen.getByRole('button',{name:/Second paper title/}));
   expect(signal!.aborted).toBe(true);
-  await act(async()=>done(json(answered)));
+  await act(async()=>done(json({...answered, run: completedRun})));
   expect(screen.queryByText('已核验的结论')).toBeNull();
+  expect(screen.queryByText('运行记录')).toBeNull();
+});
+
+describe('completed request records', () => {
+  it('shows a collapsible final record with stage timings and reuses the response trace', async () => {
+    setupAnswer({ ...answered, run: completedRun });
+    render(<App />); await submitAnswer();
+    const summary = await screen.findByText('运行记录');
+    const details = summary.closest('details')!;
+    expect(details.open).toBe(false);
+    fireEvent.click(summary);
+    expect(details.open).toBe(true);
+    const record = within(details);
+    expect(record.getByText(/这是请求结束后返回的记录，不是实时进度/)).toBeTruthy();
+    expect(record.getByText('published')).toBeTruthy();
+    expect(record.getByText(`Trace ${evidence.trace_id}`)).toBeTruthy();
+    expect(record.getByText('1,000 ms')).toBeTruthy();
+    const stages = within(record.getByRole('table', { name: '运行阶段记录' }));
+    expect(stages.getAllByText('已完成')).toHaveLength(7);
+    expect(stages.getAllByText('10 ms')).toHaveLength(7);
+  });
+
+  it('explains a verification block and leaves unexecuted stages visible without exposing a draft', async () => {
+    const run: RunRecord = { ...completedRun, state: 'blocked', reason: 'semantic_verification_failed', terminal_stage: 'verify', stages: completedRun.stages.map((stage, index) => ({ ...stage, status: index < 4 ? 'completed' : index === 4 ? 'stopped' : 'not_run', latency_ms: index > 4 ? null : 10 })) };
+    setupAnswer({ ...answered, status: 'verification_failed', run });
+    render(<App />); await submitAnswer();
+    const details = (await screen.findByText('运行记录')).closest('details')!;
+    fireEvent.click(within(details).getByText('运行记录'));
+    const record = within(details);
+    expect(record.getByText('语义支持核验未通过')).toBeTruthy();
+    expect(record.getByText('semantic_verification_failed')).toBeTruthy();
+    expect(record.getByText('在此停止')).toBeTruthy();
+    expect(record.getAllByText('未执行')).toHaveLength(2);
+    expect(record.getAllByText('—')).toHaveLength(2);
+    expect(screen.queryByText('已核验的结论')).toBeNull();
+  });
+
+  it('displays an HTTP 409 record, clears it on retry, and accepts a legacy response', async () => {
+    let attempts = 0;
+    let finishRetry: (response: Response) => void = () => {};
+    const run: RunRecord = { ...completedRun, state: 'blocked', reason: 'corpus_changed', terminal_stage: 'publication_check' };
+    setupAnswer(() => {
+      attempts++;
+      return attempts === 1
+        ? Promise.resolve(new Response(JSON.stringify({ detail: '语料已变化，请重试', run }), { status: 409 }))
+        : new Promise<Response>(resolve => { finishRetry = resolve; });
+    });
+    render(<App />); await submitAnswer();
+    await screen.findByText('语料已变化，请重试');
+    expect(screen.getByText('corpus_changed')).toBeTruthy();
+    expect(screen.queryByText('已核验的结论')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '重试' }));
+    expect(screen.queryByText('运行记录')).toBeNull();
+    await act(async () => finishRetry(json(answered)));
+    await screen.findByText('已核验的结论');
+    expect(screen.queryByText('运行记录')).toBeNull();
+  });
+
+  it.each(['paper', 'task', 'question'] as const)('clears a completed record when changing the %s', async change => {
+    setupAnswer({ ...answered, run: completedRun });
+    render(<App />); await submitAnswer();
+    await screen.findByText('运行记录');
+    if (change === 'paper') fireEvent.click(screen.getByRole('button', { name: /Second paper title/ }));
+    if (change === 'task') fireEvent.change(screen.getByLabelText('任务'), { target: { value: 'evidence' } });
+    if (change === 'question') fireEvent.change(screen.getByLabelText('输入检索问题'), { target: { value: 'new question' } });
+    expect(screen.queryByText('运行记录')).toBeNull();
+  });
 });
 
 it('keeps fusion constant separate from output count and sends selected weights',async()=>{

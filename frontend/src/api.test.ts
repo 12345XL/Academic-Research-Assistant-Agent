@@ -1,12 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadContext, request } from './api';
+import { ApiError, loadContext, request } from './api';
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('request failure boundaries', () => {
   it('preserves server detail without returning failed response as data', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: '语料正在更新，请稍后重试检索' }), { status: 409 })));
-    await expect(request('/api/v1/retrieve')).rejects.toThrow('语料正在更新');
+    await expect(request('/api/v1/retrieve')).rejects.toMatchObject({ name: 'ApiError', status: 409, message: '语料正在更新，请稍后重试检索', run: undefined });
+  });
+
+  it('carries the final run record with an HTTP error and preserves its status', async () => {
+    const run = { trace_id: 'conflict-trace', state: 'blocked', reason: 'corpus_changed', terminal_stage: 'publication_check', latency_ms: 250, stages: [] };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: '语料已变化，请重试', run }), { status: 409 })));
+    const error = await request('/api/v1/answer').catch(error => error);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 409, message: '语料已变化，请重试', run });
   });
 
   it('distinguishes user cancellation from an unavailable backend', async () => {

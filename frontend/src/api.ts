@@ -32,6 +32,14 @@ export interface Paragraph {
 
 export interface Citation extends Paragraph { rank: number; score: number }
 export interface Page<T> { total: number; items: T[] }
+export interface RunRecord {
+  trace_id: string;
+  state: 'completed' | 'abstained' | 'blocked' | 'failed';
+  reason: string;
+  terminal_stage: string;
+  latency_ms: number;
+  stages: { name: string; status: 'completed' | 'stopped' | 'failed' | 'not_run'; latency_ms: number | null }[];
+}
 export interface Retrieval {
   trace_id: string;
   query: string;
@@ -44,6 +52,7 @@ export interface Retrieval {
   citations: Citation[];
   notice: string;
   trace: { rrf_constant?: number; dense_weight?: number; rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
+  run?: RunRecord;
 }
 
 export interface System {
@@ -77,6 +86,18 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '请求未能完成，请稍后重试。';
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly run?: RunRecord;
+
+  constructor(message: string, status: number, run?: RunRecord) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.run = run;
+  }
+}
+
 async function checkedFetch(path: string, options?: RequestInit): Promise<Response> {
   let response: Response;
   try {
@@ -86,9 +107,9 @@ async function checkedFetch(path: string, options?: RequestInit): Promise<Respon
     throw new Error('无法连接后端服务，请确认服务已启动后重试。');
   }
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as { detail?: unknown } | null;
+    const body = await response.json().catch(() => null) as { detail?: unknown; run?: RunRecord } | null;
     const detail = typeof body?.detail === 'string' ? body.detail : null;
-    throw new Error(detail || `请求失败（HTTP ${response.status}），请稍后重试。`);
+    throw new ApiError(detail || `请求失败（HTTP ${response.status}），请稍后重试。`, response.status, body?.run);
   }
   return response;
 }

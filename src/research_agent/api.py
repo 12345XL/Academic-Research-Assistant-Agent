@@ -83,32 +83,44 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         description="指定论文内的 BM25、向量与 RRF 原文证据检索；本机公共语料；可选 DeepSeek 生成与引用核验。",
     )
 
+    def failure(status_code, detail, exc):
+        content = {"detail": detail}
+        if getattr(exc, "answer_run", None):
+            content["run"] = exc.answer_run
+        if getattr(exc, "answer_generation", None):
+            content["generation"] = exc.answer_generation
+        return JSONResponse(status_code=status_code, content=content)
+
     @app.exception_handler(GenerationBusyError)
     async def generation_busy(request: Request, exc: GenerationBusyError):
         return JSONResponse(status_code=409, content={"detail": "已有回答正在运行，请完成后再试"})
 
     @app.exception_handler(CorpusChangedError)
     async def changed_corpus(request: Request, exc: CorpusChangedError):
-        return JSONResponse(status_code=409, content={"detail": "语料正在更新，请稍后重试检索"})
+        return failure(409, "语料正在更新，请稍后重试检索", exc)
 
     @app.exception_handler(CorpusIntegrityError)
     async def invalid_corpus(request: Request, exc: CorpusIntegrityError):
-        return JSONResponse(status_code=502, content={"detail": "论文证据校验失败，请检查数据并重新导入"})
+        return failure(502, "论文证据校验失败，请检查数据并重新导入", exc)
 
     @app.exception_handler(VectorUnavailableError)
     async def vector_unavailable(request: Request, exc: VectorUnavailableError):
-        return JSONResponse(status_code=503, content={"detail": str(exc)})
+        return failure(503, str(exc), exc)
 
     @app.exception_handler(RerankerUnavailableError)
     async def reranker_unavailable(request: Request, exc: RerankerUnavailableError):
-        return JSONResponse(status_code=503, content={"detail": str(exc)})
+        return failure(503, str(exc), exc)
+
+    @app.exception_handler(Exception)
+    async def unexpected_failure(request: Request, exc: Exception):
+        return failure(500, "本次请求未能完成，请稍后重试或检查服务记录", exc)
 
     if persistent:
         import psycopg
         from botocore.exceptions import BotoCoreError, ClientError
 
         async def dependency_unavailable(request: Request, exc: Exception):
-            return JSONResponse(status_code=503, content={"detail": "存储服务暂不可用，请检查数据与存储页面后重试"})
+            return failure(503, "存储服务暂不可用，请检查数据与存储页面后重试", exc)
 
         # Never leak DSNs, credentials, bucket internals or driver stack traces.
         app.add_exception_handler(psycopg.Error, dependency_unavailable)
@@ -258,10 +270,10 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         try:
             return answers[body.profile].answer(service(), body.query, body.paper_id, body.top_k, body.mode, body.rerank,
                                                 language=body.language, rrf_constant=body.rrf_constant, dense_weight=body.dense_weight)
-        except KeyError:
-            raise HTTPException(404, "论文不存在") from None
-        except ValueError:
-            raise HTTPException(422, "输入超出模型或检索限制，请缩短问题后重试") from None
+        except KeyError as exc:
+            return failure(404, "论文不存在", exc)
+        except ValueError as exc:
+            return failure(422, "输入超出模型或检索限制，请缩短问题后重试", exc)
 
     return app
 

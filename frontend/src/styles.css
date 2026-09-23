@@ -37,3 +37,23 @@
 .experiment-fields { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 10px; }
 .experiment-fields label { display: flex; align-items: center; gap: 7px; }
 .experiment-fields select { padding: 6px; max-width: 100%; }
+
+.run-record { margin-top: 22px; border: 1px solid #dce4d2; border-radius: 8px; background: #fafcf6; font-size: 12px; color: #53694b; }
+.run-record > summary { cursor: pointer; padding: 14px 16px; line-height: 1.7; }
+.run-record > summary > span { margin-right: 12px; }
+.run-record > summary > span:last-child { color: #77866c; font-size: 11px; }
+.run-state { border-radius: 4px; padding: 3px 7px; background: #e9f0e2; font-size: 11px; }
+.run-state.blocked, .run-state.failed { background: #f7eadd; color: #926348; }
+.run-record-body { border-top: 1px solid #e2e8da; padding: 14px 16px; }
+.run-record-hint { color: #7e8b73; line-height: 1.8; font-size: 11px; }
+.run-reason { margin: 12px 0; line-height: 1.8; overflow-wrap: anywhere; }
+.run-reason code { margin-left: 8px; color: #7a8970; font-size: 11px; }
+.run-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 12px 0; font-size: 11px; line-height: 1.8; }
+.run-meta > div { min-width: 0; }
+.run-meta dt { color: #87957c; }
+.run-meta dd { margin: 0; overflow-wrap: anywhere; }
+.run-stages { font-size: 11px; }
+.run-stages th, .run-stages td { padding: 9px 10px; color: #6d7e60; }
+.run-stages th { background: transparent; }
+.run-stages th[scope="row"] { white-space: normal; font-weight: 400; }
+.run-stages th code { display: block; color: #8c9981; margin-top: 3px; font-size: 10px; }

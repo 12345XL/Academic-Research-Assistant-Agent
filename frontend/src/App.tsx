@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Icon from './Icon';
-import { downloadSource, errorMessage, isAbort, loadContext, request } from './api';
-import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, System } from './api';
+import { ApiError, downloadSource, errorMessage, isAbort, loadContext, request } from './api';
+import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, System } from './api';
 
 const PAGE_SIZE = 12;
 const LIBRARY_WIDTH_KEY = 'research-agent-library-width';
@@ -30,6 +30,42 @@ type ResearchDirection = keyof typeof DIRECTION_LABELS;
 
 function ErrorNotice({ message, retry }: { message: string; retry?: () => void }) {
   return <div className="error-notice" role="alert"><Icon name="info" /><span>{message}</span>{retry && <button onClick={retry}>重试</button>}</div>;
+}
+
+const RUN_STATES: Record<RunRecord['state'], string> = {
+  completed: '已完成', abstained: '未作答', blocked: '已拦截', failed: '运行失败',
+};
+const RUN_STAGES: Record<string, string> = {
+  retrieve: '检索证据', context: '组装上下文', generate: '生成回答',
+  citation_check: '检查引用', verify: '核验语义支持', publication_check: '检查发布条件', publish: '发布回答',
+};
+const STAGE_STATES: Record<RunRecord['stages'][number]['status'], string> = {
+  completed: '已完成', stopped: '在此停止', failed: '失败', not_run: '未执行',
+};
+const RUN_REASONS: Record<string, string> = {
+  published: '回答已通过当前检查并发布', generation_not_configured: '生成模型尚未配置',
+  no_retrieved_evidence: '检索未找到可用证据', context_budget_excluded_all: '上下文预算未容纳任何证据',
+  generator_abstained: '生成模型判断证据不足，未作答', citation_invalid: '引用完整性检查未通过',
+  semantic_verification_failed: '语义支持核验未通过', provider_timeout: '模型服务请求超时',
+  provider_http_error: '模型服务返回错误', provider_connection_error: '无法连接模型服务',
+  invalid_output: '模型输出格式不符合要求', incomplete_output: '模型输出不完整', model_refused: '模型拒绝回答',
+  corpus_changed: '运行期间论文语料发生变化', evidence_integrity_failed: '原文证据完整性检查未通过',
+  vector_unavailable: '向量检索暂不可用', reranker_unavailable: '重排模型暂不可用',
+  paper_not_found: '未找到当前论文', invalid_request: '请求参数无效',
+  dependency_unavailable: '依赖服务暂不可用', internal_error: '运行出现内部错误',
+};
+const runDuration = (value: number | null) => value === null ? '—' : `${value.toLocaleString('zh-CN', { maximumFractionDigits: 1 })} ms`;
+
+function RunRecordView({ run }: { run: RunRecord }) {
+  return <details className="run-record">
+    <summary><span>运行记录</span><span className={`run-state ${run.state}`}>{RUN_STATES[run.state]}</span><span>{runDuration(run.latency_ms)}</span></summary>
+    <div className="run-record-body">
+      <p className="run-record-hint">这是请求结束后返回的记录，不是实时进度。记录反映执行与检查结果，回答质量仍需对照原文判断。</p>
+      <p className="run-reason">{RUN_REASONS[run.reason] || '本次运行已结束，请查看原因码'}<code>{run.reason}</code></p>
+      <dl className="run-meta"><div><dt>最终状态</dt><dd>{RUN_STATES[run.state]} <code>{run.state}</code></dd></div><div><dt>结束阶段</dt><dd>{RUN_STAGES[run.terminal_stage] || run.terminal_stage} <code>{run.terminal_stage}</code></dd></div><div><dt>调用记录</dt><dd className="mono">Trace {run.trace_id}</dd></div></dl>
+      <div className="table-scroll"><table className="run-stages" aria-label="运行阶段记录"><thead><tr><th scope="col">阶段</th><th scope="col">结果</th><th scope="col">耗时</th></tr></thead><tbody>{run.stages.map(stage => <tr key={stage.name}><th scope="row">{RUN_STAGES[stage.name] || stage.name}<code>{stage.name}</code></th><td>{STAGE_STATES[stage.status]}</td><td>{runDuration(stage.latency_ms)}</td></tr>)}</tbody></table></div>
+    </div>
+  </details>;
 }
 
 function ContextDialog({ citation, paragraphs, loading, error, close, retry }: {
@@ -115,6 +151,7 @@ export default function App() {
   const [answerLanguage, setAnswerLanguage] = useState('zh');
   const [answerMode, setAnswerMode] = useState(false);
   const [result, setResult] = useState<Retrieval | null>(null);
+  const [run, setRun] = useState<RunRecord | null>(null);
   const [retrieving, setRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState('');
   const retrievalController = useRef<AbortController | null>(null);
@@ -217,25 +254,27 @@ export default function App() {
     setLibraryWidth(Math.round(Math.max(MIN_LIBRARY_WIDTH, Math.min(maximum, next))));
   }
 
+  function clearResult() { setResult(null); setRun(null); setRetrieveError(''); }
+
   function selectPaper(paper: Paper) {
     if (selected?.paper_id === paper.paper_id) return;
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
-    setSelected(paper); setQuestion(''); setResult(null); setRetrieving(false); setRetrieveError('');
+    setSelected(paper); setQuestion(''); clearResult(); setRetrieving(false);
     setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
   }
 
   function changeSort(value: PaperSort) {
     if (value === sort) return;
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
-    setSort(value); setOffset(0); setSelected(null); setQuestion(''); setResult(null);
-    setRetrieving(false); setRetrieveError(''); setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
+    setSort(value); setOffset(0); setSelected(null); setQuestion(''); clearResult();
+    setRetrieving(false); setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
   }
 
   function changeDirection(value: ResearchDirection) {
     if (value === direction) return;
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort();
-    setDirection(value); setOffset(0); setSelected(null); setQuestion(''); setResult(null);
-    setRetrieving(false); setRetrieveError(''); setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
+    setDirection(value); setOffset(0); setSelected(null); setQuestion(''); clearResult();
+    setRetrieving(false); setDownloading(false); setDownloadError(''); setContext(null); setAbstractExpanded(false);
   }
 
   async function retrieve(event?: FormEvent) {
@@ -243,11 +282,16 @@ export default function App() {
     if (!selected || !question.trim() || retrieving) return;
     retrievalController.current?.abort();
     const controller = new AbortController(); retrievalController.current = controller;
-    setRetrieving(true); setRetrieveError(''); setResult(null);
+    setRetrieving(true); clearResult();
     try {
       const response = await request<Retrieval>(answerMode ? '/api/v1/answer' : '/api/v1/retrieve', controller.signal, { paper_id: selected.paper_id, query: question.trim(), top_k: topK, mode: retrievalMode, rerank, ...(retrievalMode === "hybrid" ? { rrf_constant: rrfConstant, dense_weight: denseWeight } : {}), ...(answerMode ? { profile: answerProfile, language: answerLanguage } : {}) });
-      if (!controller.signal.aborted) setResult(response);
-    } catch (error) { if (!controller.signal.aborted && !isAbort(error)) setRetrieveError(errorMessage(error)); }
+      if (!controller.signal.aborted) { setResult(response); setRun(response.run || null); }
+    } catch (error) {
+      if (!controller.signal.aborted && !isAbort(error)) {
+        setRetrieveError(errorMessage(error));
+        setRun(error instanceof ApiError ? error.run || null : null);
+      }
+    }
     finally { if (!controller.signal.aborted) setRetrieving(false); }
   }
 
@@ -299,15 +343,15 @@ export default function App() {
             {downloadError && <ErrorNotice message={downloadError} retry={download} />}
           </section>
           <section className="question-section" aria-labelledby="question-heading"><div className="question-heading"><div><span className="section-number">01</span><h2 id="question-heading">向这篇论文提问</h2></div><span>检索范围：当前论文</span></div>
-            <form className="question-form" onSubmit={retrieve}><label htmlFor="research-question" className="sr-only">输入检索问题</label><textarea id="research-question" value={question} onChange={event => { setQuestion(event.target.value); setResult(null); }} placeholder="这篇论文使用了什么方法？输入英文关键词或问题，寻找原文证据…" maxLength={2000} rows={3} disabled={retrieving} />
-              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); setResult(null); setRetrieveError(''); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); setResult(null); setRetrieveError(''); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense">向量语义</option><option value="hybrid">混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => setTopK(Number(event.target.value))} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving} onChange={event => { setRerank(event.target.checked); setResult(null); setRetrieveError(''); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={cancelRetrieve}><Icon name="close" />{answerMode ? '停止等待' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim()}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
+            <form className="question-form" onSubmit={retrieve}><label htmlFor="research-question" className="sr-only">输入检索问题</label><textarea id="research-question" value={question} onChange={event => { setQuestion(event.target.value); clearResult(); }} placeholder="这篇论文使用了什么方法？输入英文关键词或问题，寻找原文证据…" maxLength={2000} rows={3} disabled={retrieving} />
+              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); clearResult(); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); clearResult(); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense">向量语义</option><option value="hybrid">混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => { setTopK(Number(event.target.value)); clearResult(); }} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving} onChange={event => { setRerank(event.target.checked); clearResult(); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={cancelRetrieve}><Icon name="close" />{answerMode ? '停止等待' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim()}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
               {(retrievalMode === 'hybrid' || answerMode) && <details className="experiment-options"><summary>实验设置</summary><div className="experiment-fields">
-                {retrievalMode === 'hybrid' && <><label htmlFor="rrf-constant">RRF 平滑常数 K <select id="rrf-constant" value={rrfConstant} disabled={retrieving} onChange={e => { setRrfConstant(Number(e.target.value)); setResult(null); }}>
+                {retrievalMode === 'hybrid' && <><label htmlFor="rrf-constant">RRF 平滑常数 K <select id="rrf-constant" value={rrfConstant} disabled={retrieving} onChange={e => { setRrfConstant(Number(e.target.value)); clearResult(); }}>
                   {[10, 30, 60, 100].map(k => <option key={k} value={k}>{k}</option>)}</select></label>
-                  <label htmlFor="dense-weight">向量融合权重 <select id="dense-weight" value={denseWeight} disabled={retrieving} onChange={e => { setDenseWeight(Number(e.target.value)); setResult(null); }}>
+                  <label htmlFor="dense-weight">向量融合权重 <select id="dense-weight" value={denseWeight} disabled={retrieving} onChange={e => { setDenseWeight(Number(e.target.value)); clearResult(); }}>
                   {[0, 0.25, 0.5, 0.75, 1].map(w => <option key={w} value={w}>{w * 100}%{w === 0.5 ? '（等权）' : ''}</option>)}</select></label></>}
-                {answerMode && <><label htmlFor="answer-profile">回答策略 <select id="answer-profile" value={answerProfile} disabled={retrieving} onChange={e => { setAnswerProfile(e.target.value); setResult(null); }}><option value="v1">v1 基线</option><option value="v2">v2 逐条支持核验（实验）</option></select></label>
-                  <label htmlFor="answer-language">回答语言 <select id="answer-language" value={answerLanguage} disabled={retrieving} onChange={e => { setAnswerLanguage(e.target.value); setResult(null); }}><option value="zh">中文</option><option value="en">英文</option></select></label></>}
+                {answerMode && <><label htmlFor="answer-profile">回答策略 <select id="answer-profile" value={answerProfile} disabled={retrieving} onChange={e => { setAnswerProfile(e.target.value); clearResult(); }}><option value="v1">v1 基线</option><option value="v2">v2 逐条支持核验（实验）</option></select></label>
+                  <label htmlFor="answer-language">回答语言 <select id="answer-language" value={answerLanguage} disabled={retrieving} onChange={e => { setAnswerLanguage(e.target.value); clearResult(); }}><option value="zh">中文</option><option value="en">英文</option></select></label></>}
               </div><p>K 控制排名贡献的平滑程度，不是返回段落数。向量权重之外的部分分配给词法检索。实验策略仍可能误判，需对照原文。</p></details>}
             </form>{answerMode && <p className="generation-hint">{system?.capabilities.generation ? `生成模型：${system.generation?.model || '已配置'} · 每题最多两次 API 调用；仅展示核验通过的结论。` : '尚未接入生成模型，提交后仅返回证据和配置提示。'} 停止等待不会保证远端停止生成或计费。</p>}<p className="query-hint"><Icon name="info" width="14" height="14" />支持词法、向量和混合检索对比。当前模型针对英文，建议输入英文问题；可选模型重排会增加等待时间；重排问题限 128 token，首次调用需要加载本地模型。</p>
           </section>
@@ -317,6 +361,7 @@ export default function App() {
             {result.status === 'answered' && result.claims?.map((claim, index) => <article className="answer-claim" key={index}><p>{claim.text}</p><div className="claim-references">{claim.evidence.map((ref, refIndex) => { const citation = result.citations.find(c => c.chunk_id === ref.chunk_id); return <details key={`${ref.chunk_id}-${refIndex}`}><summary>引用 {index + 1}.{refIndex + 1} · {citation?.section_name || ref.chunk_id}</summary><blockquote lang="en">{ref.quote}</blockquote>{citation && <button className="text-button" onClick={() => void openContext(citation)}>查看原文上下文<Icon name="external" width="13" height="13" /></button>}</details>; })}</div></article>)}
             <div className="answer-meta"><span>{result.generation?.prompt_version ? `${result.generation.prompt_version} · ${result.generation.answer_language === 'en' ? '英文' : '中文'} · ` : ''}{result.generation?.model_calls || 0} 次生成/核验调用 · {((result.generation?.latency_ms || 0) / 1000).toFixed(1)} 秒（含检索）</span><span className="mono">Trace {result.trace_id}</span></div>
           </section>}
+          {run && !retrieving && <RunRecordView key={run.trace_id} run={run} />}
           <section className="evidence-section" aria-labelledby="evidence-heading"><div className="evidence-heading"><div><span className="section-number">02</span><h2 id="evidence-heading">原文证据</h2>{result && <span className="evidence-count">{result.citations.length}</span>}</div>{result && <span className="retrieval-time"><Icon name="clock" width="13" height="13" />{result.trace.latency_ms.toFixed(1)} ms</span>}</div>
             {retrieveError && <ErrorNotice message={retrieveError} retry={() => void retrieve()} />}
             {retrieving ? <div className="evidence-empty" role="status"><span className="empty-symbol"><Icon name="refresh" className="spin" width="26" height="26" /></span><h3>{answerMode ? '正在检索、生成并核验' : '正在寻找原文证据'}</h3><p>{answerMode ? '核验完成后才会显示回答，请稍候…' : '在当前论文中检索与问题匹配的段落…'}</p></div> : result ? <><div className="result-query"><span>本次检索 · {result.trace.retriever === 'hybrid' ? '混合 RRF' : result.trace.retriever === 'dense' ? '向量语义' : 'BM25 词法'}{result.trace.rerank_enabled ? ' + 模型重排' : ''}{result.trace.retriever === 'hybrid' && result.trace.rrf_constant !== undefined ? ` · K=${result.trace.rrf_constant} · 向量权重 ${Math.round((result.trace.dense_weight ?? 0.5) * 100)}%` : ''}</span><p>{result.query}</p></div>{result.citations.length ? <div className="evidence-list">{result.citations.map(citation => <article className="evidence-card" key={citation.chunk_id}><div className="evidence-card-heading"><span className="evidence-rank">{String(citation.rank).padStart(2, '0')}</span><h3>{citation.section_name || '未命名章节'}</h3><span className="score-label" title="排序分数，不代表答案置信度；不同检索方式的分数不能直接比较">{result.trace.rerank_enabled ? '重排' : result.trace.retriever === 'hybrid' ? 'RRF' : result.trace.retriever === 'dense' ? '余弦' : 'BM25'} <strong>{citation.score.toFixed(!result.trace.rerank_enabled && result.trace.retriever === 'hybrid' ? 4 : 2)}</strong></span></div><p className="evidence-text" lang="en">{citation.text}</p><div className="evidence-card-foot"><span className="mono" title={citation.chunk_id}>{citation.chunk_id}</span><button className="text-button" onClick={() => void openContext(citation)}>查看原文上下文<Icon name="external" width="13" height="13" /></button></div></article>)}</div> : <div className="evidence-empty"><span className="empty-symbol"><Icon name="search" width="26" height="26" /></span><h3>没有找到词项匹配的段落</h3><p>试试论文中的方法名、数据集名或英文关键词。<br />未命中不代表这篇论文无法回答。</p></div>}<div className="result-footer"><p><Icon name="info" width="14" height="14" />{result.notice}</p><span className="mono">Trace {result.trace_id}</span></div></> : !retrieveError && <div className="evidence-empty"><span className="empty-symbol"><Icon name="file" width="26" height="26" /></span><h3>让答案的线索先出现</h3><p>输入一个问题，检索这篇论文中的相关段落。<br />每条结果都能回到原文，逐一核对。</p><span className="empty-caption">原文引用 · 相关性排序 · 上下文核对</span></div>}

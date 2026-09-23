@@ -13,6 +13,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .service import CorpusChangedError, CorpusIntegrityError
+from .harness import AnswerRun, TERMINAL_STATES, exception_reason
 
 CONTEXT_CHAR_LIMIT = 24_000
 PROMPT_VERSION = "paper-claims-v1"
@@ -278,31 +279,42 @@ class AnswerService:
             raise ValueError("Unknown answer language")
         if not self._lock.acquire(blocking=False):
             raise GenerationBusyError("已有回答正在运行，请完成后再试")
+        run, trace = AnswerRun(), {}
         try:
-            return self._answer(evidence_service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight)
+            return self._answer(evidence_service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight, run, trace)
+        except Exception as exc:
+            # Keep the original exception type/HTTP contract while retaining this run.
+            exc.answer_run = run.finish(exception_reason(exc))
+            if trace:
+                trace["model_calls"] = len(trace["calls"])
+                trace["latency_ms"] = exc.answer_run["latency_ms"]
+                exc.answer_generation = trace
+            raise
         finally:
             self._lock.release()
 
-    def _answer(self, service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight):
-        started = time.perf_counter()
+    def _answer(self, service, query, paper_id, top_k, mode, rerank, language, rrf_constant, dense_weight, run, trace):
+        run.enter("retrieve")
         persistent = hasattr(service, "repository")
         result = service.retrieve(query, paper_id, top_k, **({"mode": mode, "rerank": rerank, "rrf_constant": rrf_constant, "dense_weight": dense_weight} if persistent else {}))
+        run.trace_id = result["trace_id"]
+        run.enter("context")
         selected, budget = select_context(result["citations"])
-        trace = {"prompt_version": "paper-claims-" + self.profile, "answer_language": language, "context": budget, "calls": [],
+        trace.update({"prompt_version": "paper-claims-" + self.profile, "answer_language": language, "context": budget, "calls": [],
                  "checks": {"citation_integrity": "not_run", "semantic_support": "not_run"},
-                 "evidence_sha256": digest(selected), "model_calls": 0}
+                 "evidence_sha256": digest(selected), "model_calls": 0})
         result.update(mode="grounded_answer", claims=[], generation=trace)
 
-        def finish(status):
-            result.update(status=status, notice=NOTICES[status])
-            trace["latency_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        def finish(status, reason):
+            result.update(status=status, notice=NOTICES[status], run=run.finish(reason))
+            trace["latency_ms"] = result["run"]["latency_ms"]
             trace["model_calls"] = len(trace["calls"])
             return result
 
         if not self.settings.configured:
-            return finish("not_configured")
+            return finish("not_configured", "generation_not_configured")
         if not selected:
-            return finish("evidence_insufficient")
+            return finish("evidence_insufficient", "context_budget_excluded_all" if result["citations"] else "no_retrieved_evidence")
         # Validate the actual snapshot before sending any text to the model.
         for c in selected:
             if c["paper_id"] != paper_id or hashlib.sha256(c["text"].encode()).hexdigest() != c["text_sha256"]:
@@ -311,15 +323,19 @@ class AnswerService:
                    "evidence": [{k: c[k] for k in ("chunk_id", "section_name", "text")} for c in selected]}
 
         def call(stage, prompt, data, schema):
+            started = time.perf_counter()
             try:
                 parsed, meta = self.client.complete(prompt, data, schema)
+                meta.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
                 trace["calls"].append({"stage": stage, "status": "completed", **meta})
                 return parsed
             except ModelFailure as exc:
+                exc.metadata.setdefault("latency_ms", round((time.perf_counter() - started) * 1000, 3))
                 trace["calls"].append({"stage": stage, "status": exc.code, **exc.metadata})
                 raise
 
         def revalidate():
+            run.enter("publication_check")
             if not persistent:
                 trace["publication_check"] = "immutable_file_snapshot"
                 return
@@ -343,17 +359,19 @@ class AnswerService:
             if self.profile == "v1" and language == "en":
                 prompt = prompt.replace("in Chinese", "in English")
             prompt += "\nWrite your answer in " + ("Chinese." if language == "zh" else "English.")
+            run.enter("generate")
             draft = call("generate", prompt, payload, Draft if self.profile == "v1" else GroundedDraft)
             if not draft.answerable:
                 revalidate()
-                return finish("evidence_insufficient")
+                return finish("evidence_insufficient", "generator_abstained")
             trace["draft_sha256"] = digest(draft.model_dump())
+            run.enter("citation_check")
             by_id = {c["chunk_id"]: c for c in selected}
             for claim in draft.claims:
                 for ref in claim.evidence:
                     if ref.chunk_id not in by_id or not ref.quote.strip() or ref.quote not in by_id[ref.chunk_id]["text"]:
                         trace["checks"]["citation_integrity"] = "failed"
-                        return finish("verification_failed")
+                        return finish("verification_failed", "citation_invalid")
             trace["checks"]["citation_integrity"] = "passed"
             # Only each claim's own cited full paragraphs are given to its judge.
             cited_ids = {ref.chunk_id for claim in draft.claims for ref in claim.evidence}
@@ -361,17 +379,20 @@ class AnswerService:
                 {"claim_index": i, **claim.model_dump()} for i, claim in enumerate(draft.claims)],
                 "cited_paragraphs": [{"chunk_id": c["chunk_id"], "text": c["text"]}
                                      for c in selected if c["chunk_id"] in cited_ids]}
+            run.enter("verify")
             verification = call("verify", VERIFIER_PROMPT if self.profile == "v1" else VERIFIER_V2,
                                 verification_payload, Verification if self.profile == "v1" else DetailedVerification)
             passed = verification_passed(draft, verification, by_id)
             trace["checks"]["semantic_support"] = "passed" if passed else "failed"
             if not passed:
-                return finish("verification_failed")
+                return finish("verification_failed", "semantic_verification_failed")
             revalidate()
+            run.enter("publish")
             trace["verified_draft_sha256"] = trace["draft_sha256"]
             result["claims"] = [c.model_dump() for c in draft.claims]
             if isinstance(draft, GroundedDraft):
                 result.update(short_answer=draft.short_answer, answer_type=draft.answer_type)
-            return finish("answered")
+            return finish("answered", "published")
         except ModelFailure as exc:
-            return finish("model_refused" if exc.code == "model_refused" else "model_unavailable")
+            reason = exc.code if exc.code in TERMINAL_STATES and exc.code != "published" else "internal_error"
+            return finish("model_refused" if exc.code == "model_refused" else "model_unavailable", reason)
