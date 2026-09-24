@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Icon from './Icon';
+import { AnswerFeedbackPanel } from './AnswerFeedback';
 import { RunRecordView, RunHistory, RunProgress } from './RunRecord';
 import { ApiError, downloadSource, errorMessage, isAbort, loadContext, request, setAccessToken } from './api';
 import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, StoredRun, System } from './api';
@@ -377,6 +378,7 @@ export default function App() {
             <p className="answer-notice">{result.notice}</p>
             {result.status === 'answered' && result.claims?.map((claim, index) => <article className="answer-claim" key={index}><p>{claim.text}</p><div className="claim-references">{claim.evidence.map((ref, refIndex) => { const citation = result.citations.find(c => c.chunk_id === ref.chunk_id); return <details key={`${ref.chunk_id}-${refIndex}`}><summary>引用 {index + 1}.{refIndex + 1} · {citation?.section_name || ref.chunk_id}</summary><blockquote lang="en">{ref.quote}</blockquote>{citation && <button className="text-button" onClick={() => void openContext(citation)}>查看原文上下文<Icon name="external" width="13" height="13" /></button>}</details>; })}</div></article>)}
             <div className="answer-meta"><span>{result.generation?.prompt_version ? `${result.generation.prompt_version} · ${result.generation.answer_language === 'en' ? '英文' : '中文'} · ` : ''}{result.generation?.model_calls || 0} 次生成/核验调用 · {((result.generation?.latency_ms || 0) / 1000).toFixed(1)} 秒（含检索）</span><span className="mono">Trace {result.trace_id}</span></div>
+            {result.status === 'answered' && result.feedback_target && <AnswerFeedbackPanel key={`${credentialRevision}-${result.trace_id}`} runId={result.trace_id} target={result.feedback_target} />}
           </section>}
           {monitoredRunId ? <RunProgress key={monitoredRunId} runId={monitoredRunId} finalRun={run} waiting={retrieving} notice={cancelNotice} /> : run && !retrieving && <RunRecordView key={run.trace_id} run={run} />}
           <RunHistory key={`${credentialRevision}-${selected.paper_id}`} paperId={selected.paper_id} />

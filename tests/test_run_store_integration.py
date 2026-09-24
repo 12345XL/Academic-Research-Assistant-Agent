@@ -41,10 +41,12 @@ def run_repository(monkeypatch, tmp_path):
             return conn
 
     repo = SchemaRepository(settings)
-    migration = Path(__file__).resolve().parents[1] / "src/research_agent/migrations/005_answer_runs.sql"
-    (tmp_path / migration.name).write_bytes(migration.read_bytes())
+    migration_dir = Path(__file__).resolve().parents[1] / "src/research_agent/migrations"
+    names = ["005_answer_runs.sql", "006_answer_feedback.sql"]
+    for name in names:
+        (tmp_path / name).write_bytes((migration_dir / name).read_bytes())
     try:
-        assert repo.migrate(tmp_path) == [migration.name]
+        assert repo.migrate(tmp_path) == names
         assert repo.migrate(tmp_path) == []
         yield repo
     finally:

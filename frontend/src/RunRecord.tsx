@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { errorMessage, isAbort, request } from './api';
 import type { RunRecord, StoredRun } from './api';
 import { useRunMonitor } from './useRunMonitor';
+import { HistoricalFeedback } from './AnswerFeedback';
 
 export const RUN_STATES: Record<RunRecord['state'], string> = {
   running: '运行中', interrupted: '运行中断', completed: '已完成', abstained: '未作答', blocked: '已拦截', failed: '运行失败',
@@ -100,11 +101,12 @@ export function RunHistory({ paperId }: { paperId: string }) {
   }
 
   return <details className="run-history"><summary>当前论文的最近运行</summary><div className="run-history-body">
-    <div className="history-heading"><p>最近 20 条记录 · 列表手动刷新，打开未完成运行后自动查询状态。历史不包含答案全文。</p><button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>{loading ? '读取中…' : '刷新运行记录'}</button></div>
+    <div className="history-heading"><p>最近 20 条记录 · 列表手动刷新，打开未完成运行后自动查询状态。运行记录不含答案全文；已提交反馈可查看当时的回答快照。</p><button type="button" className="secondary-button" onClick={() => void load()} disabled={loading}>{loading ? '读取中…' : '刷新运行记录'}</button></div>
     {error && <p className="error-notice" role="alert">{error}</p>}
     {!loaded && <p className="run-record-hint">点击刷新，读取当前身份可见的运行记录。</p>}
     {loaded && !items.length && <p className="run-record-hint">当前论文暂无运行记录。</p>}
     {!!items.length && <ul className="history-items">{items.map(item => <li key={item.run_id}><button type="button" disabled={loading} onClick={() => void load(item.run_id)} aria-label={`查看运行 ${item.run_id}`}><code>{item.run_id.slice(0, 12)}</code><span>{new Date(item.created_at).toLocaleString('zh-CN', { hour12: false })}</span><span>{RUN_STATES[item.state] || item.state}</span><span>{item.cancel_requested && item.state === 'running' ? '已请求取消' : RUN_REASONS[item.reason || ''] || item.reason}</span></button></li>)}</ul>}
     {selected && <div className="history-detail"><p className="run-record-hint">运行 {selected.run_id} · 打开时记录版本 {selected.revision}</p>{selected.state === 'running' ? <RunProgress key={selected.run_id} runId={selected.run_id} initial={selected} /> : selected.snapshot.run ? <RunRecordView key={selected.run_id} run={selected.snapshot.run} historical /> : <p className="run-record-hint">此记录暂未保存阶段快照。当前状态：{RUN_STATES[selected.state]}</p>}</div>}
+    {selected?.state === 'completed' && selected.reason === 'published' && <HistoricalFeedback key={selected.run_id} runId={selected.run_id} />}
   </div></details>;
 }

@@ -75,6 +75,29 @@ export interface Retrieval {
   notice: string;
   trace: { rrf_constant?: number; dense_weight?: number; rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs?: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
   run?: RunRecord;
+  feedback_target?: FeedbackTarget;
+}
+
+export interface FeedbackTarget {
+  schema_version: number;
+  run_id: string;
+  paper_id: string;
+  question: string;
+  answer: { answerable: boolean; claims: NonNullable<Retrieval['claims']>; short_answer?: string; answer_type?: string };
+  prompt_version: string;
+  language: string;
+  evidence: { chunk_id: string; version: string | null; source: string | null; section_index: number | null; paragraph_index: number | null; text_sha256: string }[];
+}
+
+export interface AnswerFeedback {
+  run_id: string;
+  revision: number;
+  rating: 'helpful' | 'problem';
+  note: string;
+  target_sha256: string;
+  target: FeedbackTarget;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface System {

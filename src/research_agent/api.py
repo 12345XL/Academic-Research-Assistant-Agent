@@ -13,6 +13,8 @@ from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from . import __version__
@@ -24,6 +26,7 @@ from .harness import AnswerRun, exception_reason
 from .runtime import AnswerJob, RunControl, RunLimits, RunStopped
 from .access import AccessError, AccessPolicy
 from .run_store import MemoryRunStore, PostgresRunStore, RunStoreError, RunStoreConflictError
+from .feedback import FeedbackInput, FeedbackConflictError
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -135,6 +138,18 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     async def run_store_failure(request: Request, exc: RunStoreError):
         return failure(409 if isinstance(exc, RunStoreConflictError) or exc.code == "cancelled" else 503,
                        "运行记录冲突，请刷新后重试" if isinstance(exc, RunStoreConflictError) else "运行记录暂不可用，已停止本次操作", exc)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError):
+        # Do not echo feedback/snapshots or malformed Unicode in validation errors.
+        if request.url.path.startswith("/api/v1/runs/") and request.url.path.endswith("/feedback"):
+            return JSONResponse(status_code=422, content={"detail": "反馈格式无效，请检查评价、说明长度与回答快照"},
+                                headers={"Cache-Control": "no-store"})
+        return await request_validation_exception_handler(request, exc)
+
+    @app.exception_handler(FeedbackConflictError)
+    async def feedback_conflict(request: Request, exc: FeedbackConflictError):
+        return JSONResponse(status_code=409, content={"detail": str(exc), "reason": exc.reason})
 
     @app.exception_handler(RunStopped)
     async def run_stopped(request: Request, exc: RunStopped):
@@ -347,6 +362,21 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     def cancel_run(run_id: str, principal=Depends(identity)):
         owned_run(run_id, principal)
         return runs.request_cancel(run_id, principal.principal_id)
+
+    @app.get("/api/v1/runs/{run_id}/feedback")
+    def read_feedback(run_id: str, request: Request, principal=Depends(identity)):
+        record = owned_run(run_id, principal)
+        feedback = runs.get_feedback(run_id, principal.principal_id)
+        policy.revalidate(principal, record["paper_id"], request.headers.get("authorization"))
+        return JSONResponse(content={"feedback": feedback}, headers={"Cache-Control": "no-store"})
+
+    @app.post("/api/v1/runs/{run_id}/feedback")
+    def save_feedback(run_id: str, body: FeedbackInput, request: Request, principal=Depends(identity)):
+        record = owned_run(run_id, principal)
+        policy.revalidate(principal, record["paper_id"], request.headers.get("authorization"))
+        feedback = runs.save_feedback(run_id, principal.principal_id, body)
+        policy.revalidate(principal, record["paper_id"], request.headers.get("authorization"))
+        return JSONResponse(content={"feedback": feedback}, headers={"Cache-Control": "no-store"})
 
     @app.post("/api/v1/answer")
     async def answer(body: AnswerRequest, request: Request, principal=Depends(identity)):

@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .service import CorpusChangedError, CorpusIntegrityError
 from .harness import AnswerRun, TERMINAL_STATES, exception_reason
 from .runtime import RunControl, RunLimits, RunStopped, model_messages
+from .feedback import make_target, target_digest
 
 CONTEXT_CHAR_LIMIT = 24_000
 PROMPT_VERSION = "paper-claims-v1"
@@ -431,9 +432,13 @@ class AnswerService:
             control.invoke("publication_check", revalidate)
             run.enter("publish")
             trace["verified_draft_sha256"] = trace["draft_sha256"]
+            feedback_target = make_target(run.trace_id, query, paper_id, draft.model_dump(), selected,
+                                          trace["prompt_version"], language)
+            trace["feedback_sha256"] = target_digest(feedback_target)
             # The finish guard persists and checks cancellation before publishing.
             finish("answered", "published")
             result["claims"] = [c.model_dump() for c in draft.claims]
+            result["feedback_target"] = feedback_target
             if isinstance(draft, GroundedDraft):
                 result.update(short_answer=draft.short_answer, answer_type=draft.answer_type)
             return result

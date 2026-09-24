@@ -79,3 +79,17 @@
 .run-progress { margin: 20px 0; padding: 16px; border: 1px solid var(--line, #dedfd5); border-radius: 12px; background: var(--surface, #fafbf6); }
 .run-progress-label { margin: 0 0 8px; font-weight: 600; }
 .run-progress .run-record { margin-bottom: 0; }
+.answer-feedback { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.answer-feedback h3 { font-size: 15px; margin-bottom: 8px; }
+.answer-feedback fieldset { border: 0; padding: 8px 0; margin: 0; }
+.answer-feedback fieldset > label { margin-right: 20px; font-size: 13px; }
+.answer-feedback .feedback-note { display: block; margin: 14px 0 6px; }
+.answer-feedback textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: #fdfdfb; }
+.answer-feedback [role="alert"] { margin: 10px 0; color: #8a4631; }
+.answer-feedback [role="status"] { margin-top: 10px; font-size: 13px; }
+.historical-feedback { margin-top: 14px; }
+.historical-feedback > summary, .feedback-snapshot > summary { cursor: pointer; font-size: 13px; }
+.feedback-snapshot { margin: 12px 0; overflow-wrap: anywhere; }
+.feedback-snapshot p { margin-top: 8px; }
+.feedback-snapshot blockquote { margin: 8px 0; padding: 8px 12px; border-left: 2px solid var(--border); }
+.feedback-snapshot code { display: block; font-size: 11px; }

@@ -17,6 +17,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from .storage import StorageError
+from .feedback import FeedbackConflictError, FeedbackInput, next_feedback
 
 RUN_WORKER_LOCK_ID = 71420520923
 STATES = {"running", "completed", "abstained", "blocked", "failed", "interrupted"}
@@ -163,6 +164,7 @@ def sanitize_snapshot(snapshot):
             "evidence_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "draft_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "verified_draft_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
+            "feedback_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "publication_check": _enum("immutable_file_snapshot", "database_revision_and_hash"),
         })
         if "context" in trace:
@@ -244,6 +246,7 @@ class MemoryRunStore:
     def __init__(self):
         self._lock = threading.Lock()
         self._records: dict[str, dict[str, Any]] = {}
+        self._feedback: dict[str, dict[str, Any]] = {}
         self._started = False
         self._closed = False
 
@@ -309,6 +312,23 @@ class MemoryRunStore:
                 record.update(cancel_requested=True, revision=record["revision"] + 1,
                               updated_at=datetime.now(timezone.utc).isoformat())
             return deepcopy(record)
+
+
+    def get_feedback(self, run_id, owner_id):
+        with self._lock:
+            self._ready()
+            run = self._records.get(run_id)
+            return deepcopy(self._feedback.get(run_id)) if run and run["owner_id"] == owner_id else None
+
+    def save_feedback(self, run_id, owner_id, body: FeedbackInput):
+        with self._lock:
+            self._ready()
+            run = self._records.get(run_id)
+            if run is None or run["owner_id"] != owner_id:
+                raise FeedbackConflictError("target_mismatch")
+            result = next_feedback(run, self._feedback.get(run_id), body)
+            self._feedback[run_id] = result
+            return deepcopy(result)
 
 
 class PostgresRunStore:
@@ -446,4 +466,34 @@ class PostgresRunStore:
             if row is None:
                 row = self._execute("SELECT * FROM answer_runs WHERE run_id=%s AND owner_id=%s",
                                     (run_id, owner_id)).fetchone()
+            return self._record(row)
+
+    def get_feedback(self, run_id, owner_id):
+        with self._lock:
+            return self._record(self._execute(
+                "SELECT f.* FROM answer_feedback f JOIN answer_runs r USING(run_id) "
+                "WHERE r.run_id=%s AND r.owner_id=%s", (run_id, owner_id)).fetchone())
+
+    def save_feedback(self, run_id, owner_id, body: FeedbackInput):
+        with self._lock:
+            run = self._execute("SELECT * FROM answer_runs WHERE run_id=%s AND owner_id=%s",
+                                (run_id, owner_id)).fetchone()
+            if run is None:
+                raise FeedbackConflictError("target_mismatch")
+            current = self._record(self._execute("SELECT * FROM answer_feedback WHERE run_id=%s", (run_id,)).fetchone())
+            result = next_feedback(run, current, body)
+            if current and result["revision"] == current["revision"]:
+                return current
+            if current is None:
+                row = self._execute(
+                    "INSERT INTO answer_feedback(run_id,revision,rating,note,target_sha256,target) "
+                    "VALUES(%s,1,%s,%s,%s,%s) ON CONFLICT(run_id) DO NOTHING RETURNING *",
+                    (run_id, body.rating, body.note, result["target_sha256"], Jsonb(body.target))).fetchone()
+            else:
+                row = self._execute(
+                    "UPDATE answer_feedback SET rating=%s,note=%s,revision=revision+1,updated_at=clock_timestamp() "
+                    "WHERE run_id=%s AND revision=%s RETURNING *",
+                    (body.rating, body.note, run_id, body.expected_revision)).fetchone()
+            if row is None:
+                raise FeedbackConflictError()
             return self._record(row)
