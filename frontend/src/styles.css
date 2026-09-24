@@ -76,3 +76,6 @@
 .history-items button:hover { background: #edf2e6; }
 .run-state.interrupted { background: #f7eadd; color: #926348; }
 @media(max-width:600px) { .access-settings { padding: 10px 20px; } }
+.run-progress { margin: 20px 0; padding: 16px; border: 1px solid var(--line, #dedfd5); border-radius: 12px; background: var(--surface, #fafbf6); }
+.run-progress-label { margin: 0 0 8px; font-weight: 600; }
+.run-progress .run-record { margin-bottom: 0; }

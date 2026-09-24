@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Icon from './Icon';
-import { RunRecordView, RunHistory } from './RunRecord';
+import { RunRecordView, RunHistory, RunProgress } from './RunRecord';
 import { ApiError, downloadSource, errorMessage, isAbort, loadContext, request, setAccessToken } from './api';
 import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, StoredRun, System } from './api';
 
@@ -123,6 +123,7 @@ export default function App() {
   const [answerMode, setAnswerMode] = useState(false);
   const [result, setResult] = useState<Retrieval | null>(null);
   const [run, setRun] = useState<RunRecord | null>(null);
+  const [monitoredRunId, setMonitoredRunId] = useState<string | null>(null);
   const [retrieving, setRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState('');
   const [cancelling, setCancelling] = useState(false);
@@ -229,7 +230,7 @@ export default function App() {
     setLibraryWidth(Math.round(Math.max(MIN_LIBRARY_WIDTH, Math.min(maximum, next))));
   }
 
-  function clearResult() { setResult(null); setRun(null); setRetrieveError(''); setCancelNotice(''); }
+  function clearResult() { setResult(null); setRun(null); setMonitoredRunId(null); setRetrieveError(''); setCancelNotice(''); }
 
   function abortSession() {
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort();
@@ -276,13 +277,17 @@ export default function App() {
     const controller = new AbortController(); retrievalController.current = controller;
     const runId = answerMode ? crypto.randomUUID().replaceAll('-', '') : null; activeRunId.current = runId;
     setRetrieving(true); clearResult();
+    setMonitoredRunId(runId);
     try {
       const response = await request<Retrieval>(answerMode ? '/api/v1/answer' : '/api/v1/retrieve', controller.signal, { paper_id: selected.paper_id, query: question.trim(), top_k: topK, mode: retrievalMode, rerank, ...(retrievalMode === "hybrid" ? { rrf_constant: rrfConstant, dense_weight: denseWeight } : {}), ...(answerMode ? { profile: answerProfile, language: answerLanguage, run_id: runId, allow_repair: allowRepair } : {}) });
-      if (!controller.signal.aborted) { setResult(response); setRun(response.run || null); }
+      if (!controller.signal.aborted) { setResult(response); setRun(response.run || null); if (!response.run) setMonitoredRunId(null); }
     } catch (error) {
       if (!controller.signal.aborted && !isAbort(error)) {
         setRetrieveError(errorMessage(error));
         setRun(error instanceof ApiError ? error.run || null : null);
+        // Input/auth/conflict rejections need no observer. A gateway/server
+        // failure can hide accepted work: keep observing, never resubmit.
+        if (error instanceof ApiError && !error.run && [400, 401, 403, 404, 409, 422].includes(error.status)) setMonitoredRunId(null);
       }
     }
     finally { if (!controller.signal.aborted) { setRetrieving(false); activeRunId.current = null; } }
@@ -301,7 +306,7 @@ export default function App() {
       if (record.cancel_requested || record.state !== 'running') {
         waiting?.abort(); activeRunId.current = null; setRetrieving(false);
         setRun(record.snapshot.run || null);
-        setCancelNotice(record.reason === 'cancelled' ? '服务端已确认运行取消。' : record.cancel_requested && record.state === 'running' ? '服务端已接受取消请求，已停止等待。请刷新最近运行确认终态；已发出的模型请求仍可能计费。' : '运行已结束。可在最近运行查看最终状态。');
+        setCancelNotice(record.reason === 'cancelled' ? '服务端已确认运行取消。' : record.cancel_requested && record.state === 'running' ? '服务端已接受取消请求，已停止等待回答；正在自动确认终态。已发出的模型请求仍可能计费。' : '运行已结束。可在最近运行查看最终状态。');
       } else { setRetrieveError('服务端尚未确认取消，仍在等待回答，请稍后重试取消。'); }
     } catch (error) {
       if (!controller.signal.aborted && activeRunId.current === runId && !isAbort(error)) setRetrieveError(error instanceof ApiError && error.status === 404 ? '尚未找到运行记录，取消未获确认；仍在等待回答，请稍后重试取消。' : `取消未获确认；仍在等待回答。${errorMessage(error)}`);
@@ -373,8 +378,7 @@ export default function App() {
             {result.status === 'answered' && result.claims?.map((claim, index) => <article className="answer-claim" key={index}><p>{claim.text}</p><div className="claim-references">{claim.evidence.map((ref, refIndex) => { const citation = result.citations.find(c => c.chunk_id === ref.chunk_id); return <details key={`${ref.chunk_id}-${refIndex}`}><summary>引用 {index + 1}.{refIndex + 1} · {citation?.section_name || ref.chunk_id}</summary><blockquote lang="en">{ref.quote}</blockquote>{citation && <button className="text-button" onClick={() => void openContext(citation)}>查看原文上下文<Icon name="external" width="13" height="13" /></button>}</details>; })}</div></article>)}
             <div className="answer-meta"><span>{result.generation?.prompt_version ? `${result.generation.prompt_version} · ${result.generation.answer_language === 'en' ? '英文' : '中文'} · ` : ''}{result.generation?.model_calls || 0} 次生成/核验调用 · {((result.generation?.latency_ms || 0) / 1000).toFixed(1)} 秒（含检索）</span><span className="mono">Trace {result.trace_id}</span></div>
           </section>}
-          {cancelNotice && <p className="generation-hint" role="status">{cancelNotice}</p>}
-          {run && !retrieving && <RunRecordView key={run.trace_id} run={run} />}
+          {monitoredRunId ? <RunProgress key={monitoredRunId} runId={monitoredRunId} finalRun={run} waiting={retrieving} notice={cancelNotice} /> : run && !retrieving && <RunRecordView key={run.trace_id} run={run} />}
           <RunHistory key={`${credentialRevision}-${selected.paper_id}`} paperId={selected.paper_id} />
           <section className="evidence-section" aria-labelledby="evidence-heading"><div className="evidence-heading"><div><span className="section-number">02</span><h2 id="evidence-heading">原文证据</h2>{result && <span className="evidence-count">{result.citations.length}</span>}</div>{result && <span className="retrieval-time"><Icon name="clock" width="13" height="13" />{result.trace.latency_ms.toFixed(1)} ms</span>}</div>
             {retrieveError && <ErrorNotice message={retrieveError} retry={retrieving ? undefined : () => void retrieve()} />}

@@ -492,3 +492,76 @@ it('can open the minimal just-created run before any stage snapshot exists', asy
   expect(screen.getByText('运行尚未结束')).toBeTruthy();
   expect(screen.getByText('尚未开始')).toBeTruthy();
 });
+
+it('observes the submitted run while preserving the original answer delivery', async () => {
+  let finish: (value: Response) => void = () => {};
+  let ident = '';
+  let signal: AbortSignal;
+  const fetch = setupAnswer((options: RequestInit) => {
+    ident = JSON.parse(String(options.body)).run_id; signal = options.signal!;
+    return new Promise(resolve => { finish = resolve; });
+  });
+  const base = fetch.getMockImplementation()!;
+  fetch.mockImplementation((url, options) => url.startsWith('/api/v1/runs/')
+    ? Promise.resolve(json({ ...storedRun, run_id: ident, snapshot: { run: { ...completedRun, trace_id: ident } } }))
+    : base(url, options));
+  render(<App />); await submitAnswer();
+  await screen.findByText(/正在接收回答；状态记录不会代替答案正文/);
+  expect(screen.queryByText('已核验的结论')).toBeNull(); expect(signal!.aborted).toBe(false);
+  await act(async () => finish(json({ ...answered, run: { ...completedRun, trace_id: ident } })));
+  await screen.findByText('已核验的结论');
+  expect(screen.queryByLabelText('当前运行状态')).toBeNull();
+  expect(fetch.mock.calls.filter(([url]) => url === '/api/v1/answer')).toHaveLength(1);
+});
+
+it('continues observing after acknowledged cancellation and automatically displays its final reason', async () => {
+  let ident = '';
+  const fetch = setupAnswer((options: RequestInit) => { ident = JSON.parse(String(options.body)).run_id; return new Promise(() => {}); });
+  const base = fetch.getMockImplementation()!;
+  fetch.mockImplementation((url, options) => url.endsWith('/cancel')
+    ? Promise.resolve(json({ ...storedRun, run_id: ident, state: 'running', cancel_requested: true, snapshot: {} }))
+    : url.startsWith('/api/v1/runs/') ? Promise.resolve(json({ ...storedRun, run_id: ident, state: 'failed', reason: 'cancelled',
+      snapshot: { run: { ...completedRun, trace_id: ident, state: 'failed', reason: 'cancelled' } } }))
+    : base(url, options));
+  render(<App />); await submitAnswer();
+  fireEvent.click(screen.getByRole('button', { name: '取消生成' }));
+  await screen.findByText(/服务端已接受取消请求/);
+  await waitFor(() => expect(screen.getByRole('status').textContent).toBe('运行已取消'));
+  expect(screen.queryByText(/服务端已接受取消请求/)).toBeNull();
+  expect(screen.queryByText('已核验的结论')).toBeNull();
+});
+
+it('aborts status observation on paper switch and rejects a late old snapshot', async () => {
+  let finish: (value: Response) => void = () => {};
+  let signal: AbortSignal;
+  let ident = '';
+  const fetch = setupAnswer((options: RequestInit) => { ident = JSON.parse(String(options.body)).run_id; return new Promise(() => {}); });
+  const base = fetch.getMockImplementation()!;
+  fetch.mockImplementation((url, options) => url.startsWith('/api/v1/runs/')
+    ? new Promise(resolve => { signal = options.signal!; finish = resolve; }) : base(url, options));
+  render(<App />); await submitAnswer();
+  await waitFor(() => expect(signal!).toBeDefined());
+  fireEvent.click(screen.getByRole('button', { name: /Second paper title/ }));
+  expect(signal!.aborted).toBe(true);
+  await act(async () => finish(json({ ...storedRun, run_id: ident })));
+  expect(screen.queryByLabelText('当前运行状态')).toBeNull();
+  expect(screen.queryByText('运行记录')).toBeNull();
+});
+
+it('keeps observing after a gateway error that may hide an accepted run without resubmitting', async () => {
+  let ident = '';
+  const fetch = setupAnswer((options: RequestInit) => {
+    ident = JSON.parse(String(options.body)).run_id;
+    return Promise.resolve(new Response(JSON.stringify({ detail: '服务连接中断' }), { status: 502 }));
+  });
+  const base = fetch.getMockImplementation()!;
+  fetch.mockImplementation((url, options) => url.startsWith('/api/v1/runs/')
+    ? Promise.resolve(json({ ...storedRun, run_id: ident, state: 'interrupted', reason: 'server_restarted',
+      snapshot: { run: { ...completedRun, trace_id: ident, state: 'interrupted', reason: 'server_restarted' } } }))
+    : base(url, options));
+  render(<App />); await submitAnswer();
+  await screen.findByText('服务连接中断');
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('服务重启'));
+  expect(fetch.mock.calls.filter(([url]) => url === '/api/v1/answer')).toHaveLength(1);
+  expect(screen.queryByText('已核验的结论')).toBeNull();
+});
