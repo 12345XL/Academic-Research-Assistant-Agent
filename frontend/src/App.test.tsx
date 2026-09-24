@@ -565,3 +565,27 @@ it('keeps observing after a gateway error that may hide an accepted run without 
   expect(fetch.mock.calls.filter(([url]) => url === '/api/v1/answer')).toHaveLength(1);
   expect(screen.queryByText('已核验的结论')).toBeNull();
 });
+
+it('opens an uploaded PDF in answer mode with unsupported retrieval controls disabled, without auto-generating', async () => {
+  const pdf = { ...papers[0], paper_id:'pdf-one', title:'Uploaded PDF', source:'pdf', pdf_page_count:2, pdf_parse_warnings:['Check reading order'], arxiv_pdf_url:undefined };
+  const fetch=vi.fn((url: string) => {
+    if (url === '/api/v1/system') return Promise.resolve(json({...system,capabilities:{generation:true,pdf_upload:true}}));
+    if (url === '/api/v1/ingestions') return Promise.resolve(json({items:[]}));
+    if (url.startsWith('/api/v1/papers?')) return Promise.resolve(json({total:2,items:papers}));
+    if (url === '/api/v1/uploads/pdf') return Promise.resolve(json({outcome:'imported',paper:pdf,page_count:2,paragraphs:2,warnings:[],preview:[]}));
+    throw new Error(`Unexpected URL ${url}`);
+  });
+  vi.stubGlobal('fetch',fetch);render(<App/>);
+  await screen.findByRole('heading',{name:papers[0].title,level:1});
+  fireEvent.click(screen.getByText('上传文本 PDF'));
+  fireEvent.change(screen.getByLabelText('选择 PDF 文件'),{target:{files:[new File(['%PDF'], 'paper.pdf')]}});
+  fireEvent.click(screen.getByRole('button',{name:'上传并解析'}));
+  fireEvent.click(await screen.findByRole('button',{name:'打开论文并提问'}));
+  await screen.findByRole('heading',{name:'Uploaded PDF',level:1});
+  expect((document.getElementById('answer-mode') as HTMLSelectElement).value).toBe('answer');
+  expect((screen.getByLabelText('检索方式') as HTMLSelectElement).value).toBe('bm25');
+  expect((screen.getByRole('option',{name:'混合 RRF'}) as HTMLOptionElement).disabled).toBe(true);
+  expect((screen.getByRole('checkbox',{name:'模型重排'}) as HTMLInputElement).disabled).toBe(true);
+  expect(screen.getByRole('button',{name:'下载上传的原 PDF'})).toBeTruthy();
+  expect(fetch.mock.calls.some(([url])=>url==='/api/v1/answer')).toBe(false);
+});

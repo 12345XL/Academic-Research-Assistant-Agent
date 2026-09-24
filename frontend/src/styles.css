@@ -93,3 +93,14 @@
 .feedback-snapshot p { margin-top: 8px; }
 .feedback-snapshot blockquote { margin: 8px 0; padding: 8px 12px; border-left: 2px solid var(--border); }
 .feedback-snapshot code { display: block; font-size: 11px; }
+
+.pdf-upload { margin: 16px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+.pdf-upload summary { cursor: pointer; font-weight: 600; }
+.pdf-upload p { line-height: 1.7; overflow-wrap: anywhere; }
+.pdf-upload input { display: block; max-width: 100%; margin: 10px 0; font-size: 12px; }
+.pdf-upload button { margin-top: 10px; }
+.pdf-upload-result { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
+.pdf-upload-result details { max-height: 280px; overflow: auto; }
+.pdf-notice { font-size: 12px; line-height: 1.7; padding: 8px 0; color: var(--muted); }
+
+.pdf-upload[open] { max-height: 45vh; overflow: auto; flex-shrink: 0; }

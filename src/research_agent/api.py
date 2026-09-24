@@ -10,6 +10,7 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
+from urllib.parse import unquote
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
@@ -27,6 +28,8 @@ from .runtime import AnswerJob, RunControl, RunLimits, RunStopped
 from .access import AccessError, AccessPolicy
 from .run_store import MemoryRunStore, PostgresRunStore, RunStoreError, RunStoreConflictError
 from .feedback import FeedbackInput, FeedbackConflictError
+from .pdf_parser import PdfError, MAX_BYTES
+from .pdf_ingestion import ingest_pdf
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -67,6 +70,7 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     policy = access_policy or (AccessPolicy() if explicit else AccessPolicy.from_env())
     limits = run_limits or (RunLimits() if explicit else RunLimits.from_env())
     dispatch_lock = threading.Lock()
+    upload_lock = threading.Lock()
     # Explicit file or infrastructure settings stay independent of developer secrets.
     generation_settings = generation_settings or (GenerationSettings.from_env()
         if data_dir is None and settings is None else GenerationSettings())
@@ -78,7 +82,7 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     # Explicit data_dir keeps P1 evaluation/tests independent of developer secrets.
     if persistent:
         from .settings import Settings
-        from .storage import Repository, S3ObjectStore, StorageError
+        from .storage import Repository, S3ObjectStore, StorageError, ImportBusyError
         settings = settings or Settings.from_env()
         repository = Repository(settings)
         objects = S3ObjectStore(settings)
@@ -155,6 +159,11 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     async def run_stopped(request: Request, exc: RunStopped):
         return failure(408 if exc.code == "deadline_exceeded" else 409, "本次运行已停止，请查看运行记录", exc)
 
+    @app.exception_handler(PdfError)
+    async def pdf_error(request: Request, exc: PdfError):
+        return JSONResponse(status_code=exc.status, content={"detail": str(exc), "reason": exc.code},
+                            headers={"Cache-Control": "no-store"})
+
     @app.exception_handler(GenerationBusyError)
     async def generation_busy(request: Request, exc: GenerationBusyError):
         return JSONResponse(status_code=409, content={"detail": "已有回答正在运行，请完成后再试"})
@@ -185,6 +194,10 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
 
         async def dependency_unavailable(request: Request, exc: Exception):
             return failure(503, "存储服务暂不可用，请检查数据与存储页面后重试", exc)
+
+        async def import_busy(request: Request, exc: ImportBusyError):
+            return JSONResponse(status_code=409, content={"detail": "已有论文导入任务正在运行，请稍后重试"})
+        app.add_exception_handler(ImportBusyError, import_busy)
 
         # Never leak DSNs, credentials, bucket internals or driver stack traces.
         app.add_exception_handler(psycopg.Error, dependency_unavailable)
@@ -245,7 +258,7 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
                 "object_store": {"status": storage_status, "provider": "S3-compatible", "bucket": settings.s3_bucket if principal.allowed_paper_ids is None else ""},
                 "corpus": counts, "vector_index": vector_status,
                 "generation": generation_settings.public_status(),
-                "capabilities": {"generation": generation_settings.configured, "pdf_upload": False,
+                "capabilities": {"generation": generation_settings.configured, "pdf_upload": principal.mode == "local_public",
                                  "hybrid_retrieval": vector_status["state"] == "ready"}}
 
     @app.get("/ready")
@@ -285,6 +298,64 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         else:
             items.sort(key=lambda p: p["paper_id"])
         return {"total": len(items), "items": items[offset:offset + limit]}
+
+    @app.post("/api/v1/uploads/pdf")
+    async def upload_pdf(request: Request, principal=Depends(identity)):
+        if not persistent or principal.mode != "local_public":
+            raise HTTPException(403, "PDF 上传仅在本机公共存储模式开放，暂不提供私有上传")
+        if request.headers.get("content-type", "").split(";")[0].lower() != "application/pdf":
+            raise HTTPException(415, "请上传 PDF 文件")
+        if not upload_lock.acquire(blocking=False):
+            raise HTTPException(409, "已有 PDF 正在导入，请稍后重试")
+        worker_started = False
+        try:
+            async def read_body():
+                data = bytearray()
+                async for chunk in request.stream():
+                    data.extend(chunk)
+                    if len(data) > MAX_BYTES:
+                        raise PdfError("size_limit", "PDF 文件不得超过 10 MiB", 413)
+                return bytes(data)
+            try:
+                data = await asyncio.wait_for(read_body(), 60)
+            except TimeoutError:
+                raise HTTPException(408, "文件上传超时，请稍后重试") from None
+            filename = unquote(request.headers.get("x-pdf-filename", "uploaded.pdf"))
+            def execute():
+                try:
+                    return ingest_pdf(repository, objects, data, filename)
+                finally:
+                    upload_lock.release()
+            # The worker owns the lock until publication really stops, even if the browser disconnects.
+            job = AnswerJob(execute)
+            job.start(); worker_started = True
+            while not job.done.is_set():
+                await asyncio.sleep(0.05)
+            if job.error: raise job.error
+            return JSONResponse(content=job.result, headers={"Cache-Control": "no-store"})
+        finally:
+            if not worker_started: upload_lock.release()
+
+    def evidence_for(paper_id, mode="bm25", rerank=False):
+        if persistent and paper_id.startswith("pdf-"):
+            if mode != "bm25" or rerank:
+                raise HTTPException(409, "上传 PDF 当前仅支持 BM25 词法检索，未构建向量索引或启用重排")
+            return PersistentEvidenceService(repository, paper_id=paper_id)
+        return service()
+
+    @app.get("/api/v1/papers/{paper_id}/pdf")
+    def original_pdf(paper_id: str, request: Request, principal=Depends(identity)):
+        paper(paper_id, principal)
+        metadata = repository.get_pdf_object(paper_id) if persistent else None
+        if metadata is None: raise HTTPException(404, "该论文没有上传的原始 PDF")
+        body = objects.read_bytes(metadata["object_key"])
+        if len(body) != metadata["size_bytes"] or hashlib.sha256(body).hexdigest() != metadata["sha256"]:
+            raise HTTPException(502, "原 PDF 校验失败，请重新上传同一文件修复")
+        policy.revalidate(principal, paper_id, request.headers.get("authorization"))
+        return Response(body, media_type="application/pdf", headers={
+            "Content-Disposition": f'attachment; filename="{paper_id}.pdf"',
+            "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+            "X-Content-SHA256": metadata["sha256"]})
 
     @app.get("/api/v1/papers/{paper_id}")
     def paper(paper_id: str, principal=Depends(identity)):
@@ -326,7 +397,7 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         policy.require_paper(principal, body.paper_id)
         try:
             if persistent:
-                result = service().retrieve(body.query, body.paper_id, body.top_k, mode=body.mode, rerank=body.rerank,
+                result = evidence_for(body.paper_id, body.mode, body.rerank).retrieve(body.query, body.paper_id, body.top_k, mode=body.mode, rerank=body.rerank,
                                           rrf_constant=body.rrf_constant, dense_weight=body.dense_weight)
                 policy.revalidate(principal, body.paper_id, request.headers.get("authorization"))
                 return scoped_result(result, principal)
@@ -381,7 +452,7 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     @app.post("/api/v1/answer")
     async def answer(body: AnswerRequest, request: Request, principal=Depends(identity)):
         policy.require_paper(principal, body.paper_id)
-        evidence = service()
+        evidence = evidence_for(body.paper_id, body.mode, body.rerank)
         if not persistent and (body.mode != "bm25" or body.rerank):
             raise HTTPException(409, "向量、混合与重排检索需要 PostgreSQL 模式及相应模型/索引")
         if not dispatch_lock.acquire(blocking=False):

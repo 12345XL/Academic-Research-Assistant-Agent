@@ -82,8 +82,9 @@ class PersistentEvidenceService:
     S3 is used for source downloads, not required to read committed paragraphs.
     """
 
-    def __init__(self, repository, encoder=None, vector_store=None, reranker=None):
+    def __init__(self, repository, encoder=None, vector_store=None, reranker=None, *, paper_id=None):
         self.repository = repository
+        self._paper_id = paper_id
         self._revision = None
         self._evidence = None
         self._lock = threading.RLock()
@@ -147,7 +148,8 @@ class PersistentEvidenceService:
     def _ensure_snapshot(self):
         revision = self.repository.revision()
         if self._evidence is None or revision != self._revision:
-            actual_revision, papers, paragraphs = self.repository.load_snapshot()
+            actual_revision, papers, paragraphs = (self.repository.load_paper_snapshot(self._paper_id)
+                if self._paper_id else self.repository.load_snapshot())
             self._evidence = EvidenceService.from_records(papers, paragraphs)
             self._revision = actual_revision
 
@@ -161,6 +163,8 @@ class PersistentEvidenceService:
             raise ValueError("Unknown retrieval mode")
         if not 1 <= top_k <= 50 or not query.strip():
             raise ValueError("Invalid query or top_k")
+        if self._paper_id and (mode != "bm25" or rerank):
+            raise ValueError("上传 PDF 当前仅支持 BM25，不支持向量、混合或重排")
         started = time.perf_counter()
         with self._lock:
             for _ in range(2):

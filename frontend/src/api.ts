@@ -5,6 +5,8 @@ export interface Paper {
   split: string;
   source: string;
   version: string;
+  pdf_page_count?: number;
+  pdf_parse_warnings?: string[];
   arxiv_submitted_at?: string | null;
   arxiv_primary_category?: string | null;
   arxiv_categories?: string[];
@@ -195,14 +197,33 @@ export async function loadContext(paperId: string, chunkId: string, signal: Abor
   throw new Error('当前论文版本中未找到这条证据，请重新检索后再试。');
 }
 
-export async function downloadSource(paperId: string, signal: AbortSignal): Promise<void> {
-  const response = await checkedFetch(`/api/v1/papers/${encodeURIComponent(paperId)}/source`, { signal });
+export async function downloadSource(paperId: string, signal: AbortSignal, originalPdf = false): Promise<void> {
+  const response = await checkedFetch(`/api/v1/papers/${encodeURIComponent(paperId)}/${originalPdf ? 'pdf' : 'source'}`, { signal });
   const file = await response.blob();
   if (signal.aborted) return;
   const url = URL.createObjectURL(file);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${paperId.replace(/[^a-zA-Z0-9_.-]/g, '_')}.json`;
+  link.download = `${paperId.replace(/[^a-zA-Z0-9_.-]/g, '_')}.${originalPdf ? 'pdf' : 'json'}`;
+  document.body.appendChild(link);
   link.click();
+  link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export interface PdfUploadResult {
+  outcome: 'imported' | 'skipped';
+  paper: Paper;
+  page_count: number;
+  paragraphs: number;
+  warnings: string[];
+  preview: Paragraph[];
+}
+
+export async function uploadPdf(file: File, signal: AbortSignal): Promise<PdfUploadResult> {
+  const response = await checkedFetch('/api/v1/uploads/pdf', {
+    method: 'POST', signal, body: file,
+    headers: { 'Content-Type': 'application/pdf', 'X-PDF-Filename': encodeURIComponent(file.name) },
+  });
+  return response.json() as Promise<PdfUploadResult>;
 }

@@ -195,8 +195,8 @@ def _publish(conn, documents: list[PaperDocument], manifest: str, job_id: uuid.U
         actual_manifest, _ = build_documents(stored_papers, stored_paragraphs)
         if actual_manifest != manifest:
             raise StorageError("Stored version integrity check failed; publication was rolled back")
-        conn.execute("UPDATE paper_versions SET state='archived' WHERE state='active'")
-        conn.execute("UPDATE papers SET in_current_corpus=false")
+        conn.execute("UPDATE paper_versions SET state='archived' WHERE state='active' AND source='qasper'")
+        conn.execute("UPDATE papers SET in_current_corpus=false WHERE current_version_id IN (SELECT version_id FROM paper_versions WHERE source='qasper')")
         cursor.executemany("UPDATE paper_versions SET state='active' WHERE version_id=%s", [(d.version_id,) for d in documents])
         cursor.executemany("UPDATE papers SET current_version_id=%s,in_current_corpus=true WHERE paper_id=%s",
                            [(d.version_id, d.paper["paper_id"]) for d in documents])

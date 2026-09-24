@@ -64,3 +64,19 @@ describe('in-memory access credential', () => {
     expect(new Headers(fetch.mock.lastCall?.[1].headers).has('Authorization')).toBe(false);
   });
 });
+
+it('downloads original PDF with authorization and a PDF filename via an attached link', async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response('%PDF-fixture', {headers:{'Content-Type':'application/pdf'}}));
+  vi.stubGlobal('fetch', fetch);
+  vi.stubGlobal('URL', Object.assign(class extends URL {}, {createObjectURL:()=> 'blob:pdf-test', revokeObjectURL:()=>{}}));
+  let filename='', attached=false;
+  vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(function(this:HTMLAnchorElement) {
+    filename=this.download; attached=this.isConnected;
+  });
+  setAccessToken('pdf-token');
+  await downloadSource('pdf-one',new AbortController().signal,true);
+  expect(fetch.mock.calls[0][0]).toBe('/api/v1/papers/pdf-one/pdf');
+  expect(fetch.mock.calls[0][1].headers.get('Authorization')).toBe('Bearer pdf-token');
+  expect(filename).toBe('pdf-one.pdf');expect(attached).toBe(true);
+  expect(document.querySelector('a[download]')).toBeNull();
+});

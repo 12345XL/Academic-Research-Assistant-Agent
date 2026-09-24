@@ -112,12 +112,30 @@ class Repository:
             revision = conn.execute("SELECT revision FROM corpus_state WHERE singleton").fetchone()["revision"]
             papers = [r["paper_payload"] for r in conn.execute(
                 "SELECT v.paper_payload FROM papers p JOIN paper_versions v ON v.version_id=p.current_version_id "
-                "WHERE p.in_current_corpus AND v.state='active' ORDER BY p.paper_id")]
+                "WHERE p.in_current_corpus AND v.state='active' AND v.source='qasper' ORDER BY p.paper_id")]
             paragraphs = [r["paragraph_payload"] for r in conn.execute(
                 "SELECT x.paragraph_payload FROM papers p JOIN paper_versions v ON v.version_id=p.current_version_id "
-                "JOIN paragraphs x ON x.version_id=v.version_id WHERE p.in_current_corpus AND v.state='active' "
+                "JOIN paragraphs x ON x.version_id=v.version_id WHERE p.in_current_corpus AND v.state='active' AND v.source='qasper' "
                 "ORDER BY p.paper_id,x.ordinal")]
         return revision, papers, paragraphs
+
+    def load_paper_snapshot(self, paper_id):
+        with self.connect() as conn:
+            conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            revision = conn.execute("SELECT revision FROM corpus_state WHERE singleton").fetchone()["revision"]
+            rows = conn.execute("SELECT v.paper_payload,v.version_id FROM papers p JOIN paper_versions v "
+                "ON v.version_id=p.current_version_id WHERE p.paper_id=%s AND p.in_current_corpus AND v.state='active'",
+                (paper_id,)).fetchall()
+            chunks = [] if not rows else [r["paragraph_payload"] for r in conn.execute(
+                "SELECT paragraph_payload FROM paragraphs WHERE version_id=%s ORDER BY ordinal", (rows[0]["version_id"],))]
+        return revision, [r["paper_payload"] for r in rows], chunks
+
+    def get_pdf_object(self, paper_id):
+        with self.connect() as conn:
+            row = conn.execute("SELECT o.object_key,o.sha256,o.size_bytes,o.bucket FROM pdf_documents d "
+                "JOIN stored_objects o ON o.object_key=d.original_object_key JOIN papers p USING(paper_id) "
+                "WHERE d.paper_id=%s AND p.in_current_corpus AND o.state='published'", (paper_id,)).fetchone()
+        return dict(row) if row else None
 
     def revision(self) -> int:
         with self.connect() as conn:
@@ -233,6 +251,11 @@ class Repository:
             row = conn.execute("SELECT revision,manifest_sha256,paper_count,paragraph_count,published_at "
                                "FROM corpus_state WHERE singleton").fetchone()
             if allowed_paper_ids is None:
+                uploaded = conn.execute("SELECT count(DISTINCT p.paper_id) AS papers,count(x.chunk_id) AS chunks "
+                    "FROM papers p JOIN paper_versions v ON v.version_id=p.current_version_id "
+                    "JOIN paragraphs x ON x.version_id=v.version_id WHERE p.in_current_corpus AND v.state='active' AND v.source='pdf'").fetchone()
+                row = {**row, "paper_count": row["paper_count"] + uploaded["papers"],
+                       "paragraph_count": row["paragraph_count"] + uploaded["chunks"]}
                 objects = conn.execute("SELECT state,count(*) AS count FROM stored_objects GROUP BY state").fetchall()
                 metadata = conn.execute(
                     "SELECT count(*) FILTER (WHERE arxiv_submitted_at IS NOT NULL) AS submitted_dates,"
@@ -251,7 +274,8 @@ class Repository:
                 row = {**row, **counts, "manifest_sha256": None}
                 objects = conn.execute(
                     "SELECT o.state,count(DISTINCT o.object_key) AS count " + join
-                    + "JOIN stored_objects o ON o.object_key=v.object_key " + clause + " GROUP BY o.state",
+                    + "LEFT JOIN pdf_documents d ON d.paper_id=p.paper_id "
+                    + "JOIN stored_objects o ON o.object_key=v.object_key OR o.object_key=d.original_object_key " + clause + " GROUP BY o.state",
                     parameters,
                 ).fetchall()
                 metadata = conn.execute(
@@ -342,7 +366,7 @@ class S3ObjectStore:
         except (BotoCoreError, ClientError):
             raise StorageError("Stored document could not be read") from None
 
-    def put_verified(self, key: str, content: bytes, checksum: str) -> bool:
+    def put_verified(self, key: str, content: bytes, checksum: str, content_type="application/json") -> bool:
         """Return True when uploaded/repaired; verify actual bytes, not S3 ETag."""
         if hashlib.sha256(content).hexdigest() != checksum:
             raise StorageError("Document checksum does not match its content")
@@ -352,7 +376,7 @@ class S3ObjectStore:
                 return False
         try:
             self.client.put_object(Bucket=self.bucket, Key=key, Body=content,
-                                   ContentType="application/json", Metadata={"sha256": checksum})
+                                   ContentType=content_type, Metadata={"sha256": checksum})
         except (BotoCoreError, ClientError):
             raise StorageError("Document could not be stored") from None
         if hashlib.sha256(self.read_bytes(key)).hexdigest() != checksum:
