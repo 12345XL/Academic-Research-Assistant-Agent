@@ -65,6 +65,9 @@ export interface StoredRun {
   metadata: Record<string, unknown>;
 }
 export interface Retrieval {
+  conversation?: Conversation;
+  memory_notice?: string;
+  memory_used_turns?: number;
   trace_id: string;
   query: string;
   paper_id: string;
@@ -78,6 +81,15 @@ export interface Retrieval {
   trace: { rrf_constant?: number; dense_weight?: number; rerank_enabled?: boolean; rerank_latency_ms?: number; retriever: string; k1: number; b: number; corpus_paragraphs?: number; paper_paragraphs: number; returned: number; latency_ms: number; model_calls: number };
   run?: RunRecord;
   feedback_target?: FeedbackTarget;
+}
+
+export interface Conversation {
+  conversation_id: string;
+  paper_id: string;
+  paper_version: string;
+  revision: number;
+  expires_at: string;
+  turns: { run_id: string; question: string; answer: string; answer_truncated: boolean; claim_count: number }[];
 }
 
 export interface FeedbackTarget {

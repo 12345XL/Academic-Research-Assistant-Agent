@@ -141,6 +141,12 @@ class Repository:
         with self.connect() as conn:
             return conn.execute("SELECT revision FROM corpus_state WHERE singleton").fetchone()["revision"]
 
+    def paper_version_key(self, paper_id):
+        with self.connect() as conn:
+            row = conn.execute('SELECT current_version_id FROM papers WHERE paper_id=%s AND in_current_corpus',
+                               (paper_id,)).fetchone()
+        return str(row['current_version_id']) if row else None
+
     def get_chunks(self, chunk_ids: list[str], paper_id: str) -> dict[str, dict]:
         if not chunk_ids:
             return {}

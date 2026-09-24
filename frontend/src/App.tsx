@@ -5,7 +5,7 @@ import { PdfUpload } from './PdfUpload';
 import { AnswerFeedbackPanel } from './AnswerFeedback';
 import { RunRecordView, RunHistory, RunProgress } from './RunRecord';
 import { ApiError, downloadSource, errorMessage, isAbort, loadContext, request, setAccessToken } from './api';
-import type { Citation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, StoredRun, System } from './api';
+import type { Citation, Conversation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, StoredRun, System } from './api';
 
 const PAGE_SIZE = 12;
 const LIBRARY_WIDTH_KEY = 'research-agent-library-width';
@@ -123,6 +123,11 @@ export default function App() {
   const [answerLanguage, setAnswerLanguage] = useState('zh');
   const [allowRepair, setAllowRepair] = useState(false);
   const [answerMode, setAnswerMode] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [memoryBusy, setMemoryBusy] = useState(false);
+  const [memoryNotice, setMemoryNotice] = useState('');
+  const memoryController = useRef<AbortController | null>(null);
   const [result, setResult] = useState<Retrieval | null>(null);
   const [run, setRun] = useState<RunRecord | null>(null);
   const [monitoredRunId, setMonitoredRunId] = useState<string | null>(null);
@@ -174,7 +179,7 @@ export default function App() {
     return () => controller.abort();
   }, [filter, direction, sort, offset, listRevision, credentialRevision]);
 
-  useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort(); setAccessToken(''); }, []);
+  useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort(); memoryController.current?.abort(); setAccessToken(''); }, []);
 
   useEffect(() => {
     try { window.localStorage.setItem(LIBRARY_WIDTH_KEY, String(libraryWidth)); } catch { /* storage may be unavailable */ }
@@ -236,6 +241,7 @@ export default function App() {
   function clearResult() { setResult(null); setRun(null); setMonitoredRunId(null); setRetrieveError(''); setCancelNotice(''); }
 
   function abortSession() {
+    memoryController.current?.abort(); setConversation(null); setRemember(false); setMemoryBusy(false); setMemoryNotice('');
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort();
     activeRunId.current = null; setCancelling(false);
   }
@@ -276,15 +282,22 @@ export default function App() {
 
   async function retrieve(event?: FormEvent) {
     event?.preventDefault();
-    if (!selected || !question.trim() || retrieving) return;
+    if (!selected || !question.trim() || retrieving || memoryBusy) return;
     retrievalController.current?.abort(); cancelController.current?.abort(); setCancelling(false);
     const controller = new AbortController(); retrievalController.current = controller;
     const runId = answerMode ? crypto.randomUUID().replaceAll('-', '') : null; activeRunId.current = runId;
     setRetrieving(true); clearResult();
-    setMonitoredRunId(runId);
+    setMonitoredRunId(null); setMemoryNotice('');
     try {
-      const response = await request<Retrieval>(answerMode ? '/api/v1/answer' : '/api/v1/retrieve', controller.signal, { paper_id: selected.paper_id, query: question.trim(), top_k: topK, mode: retrievalMode, rerank, ...(retrievalMode === "hybrid" ? { rrf_constant: rrfConstant, dense_weight: denseWeight } : {}), ...(answerMode ? { profile: answerProfile, language: answerLanguage, run_id: runId, allow_repair: allowRepair } : {}) });
-      if (!controller.signal.aborted) { setResult(response); setRun(response.run || null); if (!response.run) setMonitoredRunId(null); }
+      let activeConversation = answerMode && remember ? conversation : null;
+      if (answerMode && remember && !activeConversation) {
+        activeConversation = await request<Conversation>('/api/v1/conversations', controller.signal, { paper_id: selected.paper_id });
+        if (controller.signal.aborted) return;
+        setConversation(activeConversation);
+      }
+      setMonitoredRunId(runId);
+      const response = await request<Retrieval>(answerMode ? '/api/v1/answer' : '/api/v1/retrieve', controller.signal, { paper_id: selected.paper_id, query: question.trim(), top_k: topK, mode: retrievalMode, rerank, ...(retrievalMode === "hybrid" ? { rrf_constant: rrfConstant, dense_weight: denseWeight } : {}), ...(answerMode ? { profile: answerProfile, language: answerLanguage, run_id: runId, allow_repair: allowRepair, ...(activeConversation ? { conversation_id: activeConversation.conversation_id, conversation_revision: activeConversation.revision } : {}) } : {}) });
+      if (!controller.signal.aborted) { setResult(response); setRun(response.run || null); if (!response.run) setMonitoredRunId(null); if (response.conversation) setConversation(response.conversation); setMemoryNotice(response.memory_notice || ''); }
     } catch (error) {
       if (!controller.signal.aborted && !isAbort(error)) {
         setRetrieveError(errorMessage(error));
@@ -295,6 +308,25 @@ export default function App() {
       }
     }
     finally { if (!controller.signal.aborted) { setRetrieving(false); activeRunId.current = null; } }
+  }
+
+  async function updateMemory(clear: boolean) {
+    if (!conversation || memoryBusy || retrieving) return;
+    memoryController.current?.abort();
+    const controller = new AbortController(); memoryController.current = controller;
+    setMemoryBusy(true); setMemoryNotice('');
+    try {
+      const path = `/api/v1/conversations/${conversation.conversation_id}`;
+      if (clear) {
+        await request(path + '/clear', controller.signal, {});
+        if (!controller.signal.aborted) { setConversation(null); clearResult(); setMemoryNotice('本篇对话记忆已清空。已提交的反馈与运行记录仍单独保留。'); }
+      } else {
+        const current = await request<Conversation>(path, controller.signal);
+        if (!controller.signal.aborted) setConversation(current);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) setMemoryNotice(errorMessage(error));
+    } finally { if (!controller.signal.aborted) setMemoryBusy(false); }
   }
 
   async function cancelRetrieve() {
@@ -358,7 +390,7 @@ export default function App() {
       </aside>
       <div className="pane-resizer" role="separator" aria-label="调整论文库与正文区宽度" aria-orientation="vertical" aria-valuemin={MIN_LIBRARY_WIDTH} aria-valuemax={MAX_LIBRARY_WIDTH} aria-valuenow={libraryWidth} tabIndex={0} title="拖动调整左右占比；双击恢复默认宽度" onPointerDown={startPaneResize} onPointerMove={movePaneResize} onPointerUp={stopPaneResize} onPointerCancel={stopPaneResize} onLostPointerCapture={event => { if (resizingRef.current) stopPaneResize(event); }} onKeyDown={resizePaneWithKeyboard} onDoubleClick={() => setLibraryWidth(window.innerWidth <= 1100 ? 285 : 326)}><span /></div>
       <main className="research-main">
-        <div className="research-breadcrumb"><span>论文工作台</span><Icon name="chevron" width="12" height="12" /><span>原文证据检索</span><span className="mode-tag">P3 · 受控问答</span></div>
+        <div className="research-breadcrumb"><span>论文工作台</span><Icon name="chevron" width="12" height="12" /><span>原文证据检索</span><span className="mode-tag">P5-1 · 论文内对话</span></div>
         {selected ? <>
           <section className="paper-overview" aria-labelledby="paper-heading"><div className="paper-overline"><span className="tag green">当前论文</span><span className="mono" title={selected.paper_id}>{selected.source === 'pdf' ? selected.paper_id.slice(0, 16) + '…' : selected.paper_id}</span>{selected.research_direction_label && <span className="direction-badge" title={`arXiv 主分类 ${selected.arxiv_primary_category}`}>{selected.research_direction_label} · {selected.arxiv_primary_category}</span>}{selected.source !== 'pdf' && <span>{paperDate(selected.arxiv_submitted_at)} 首次提交 arXiv</span>}{selected.ccf_level && <span className={`ccf-badge ccf-${selected.ccf_level.toLowerCase()}`} title="CCF 对发表载体的目录级别；不代表论文质量评分">{selected.ccf_venue} · CCF {selected.ccf_level}</span>}<span className="paper-version" title={selected.version}>{selected.source === 'pdf' ? '文本解析 v1' : selected.version}</span></div><h1 id="paper-heading" lang="en">{selected.title}</h1>
             <p className={`paper-abstract ${abstractExpanded ? 'expanded' : ''}`} lang="en">{selected.abstract || '这篇论文没有提供摘要。'}</p>
@@ -367,8 +399,16 @@ export default function App() {
             {downloadError && <ErrorNotice message={downloadError} retry={() => void download(downloadKind.current)} />}
           </section>
           <section className="question-section" aria-labelledby="question-heading"><div className="question-heading"><div><span className="section-number">01</span><h2 id="question-heading">向这篇论文提问</h2></div><span>检索范围：当前论文</span></div>
+            {answerMode && <div className="conversation-panel">
+              <label><input type="checkbox" checked={remember} disabled={retrieving || memoryBusy} onChange={e => setRemember(e.target.checked)} />记住本篇对话</label>
+              <p>开启后保存最近已完成的问答，最多 6 轮、6000 字符，创建后 24 小时失效。追问仍需原文支持。关闭后暂停使用；切换论文或身份后开始新对话。本机公共模式下身份共享。</p>
+              {conversation && <><div className="conversation-actions"><span>已保留 {conversation.turns.length} 轮 · 到期 {date(conversation.expires_at)}</span><button type="button" className="text-button" disabled={retrieving || memoryBusy} onClick={() => void updateMemory(false)}>刷新对话</button><button type="button" className="text-button" disabled={retrieving || memoryBusy} onClick={() => void updateMemory(true)}>清空对话</button></div>
+                <details><summary>查看本篇对话</summary>{conversation.turns.map(turn => <article key={turn.run_id}><p><strong>问：</strong>{turn.question}</p><p><strong>答：</strong>{turn.answer}{turn.answer_truncated ? '（仅保留部分回答）' : ''}</p></article>)}</details></>}
+              {memoryNotice && <p role="status">{memoryNotice}</p>}
+              {result?.memory_used_turns !== undefined && <p>本轮参考 {result.memory_used_turns} 轮上文；回答依据仍来自本次检索的原文。</p>}
+            </div>}
             <form className="question-form" onSubmit={retrieve}><label htmlFor="research-question" className="sr-only">输入检索问题</label><textarea id="research-question" value={question} onChange={event => { setQuestion(event.target.value); clearResult(); }} placeholder="这篇论文使用了什么方法？输入英文关键词或问题，寻找原文证据…" maxLength={2000} rows={3} disabled={retrieving} />
-              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); clearResult(); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); clearResult(); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense" disabled={selected.source === 'pdf'}>向量语义</option><option value="hybrid" disabled={selected.source === 'pdf'}>混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => { setTopK(Number(event.target.value)); clearResult(); }} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving || selected.source === 'pdf'} onChange={event => { setRerank(event.target.checked); clearResult(); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={() => void cancelRetrieve()} disabled={cancelling}><Icon name="close" />{cancelling ? '正在请求取消…' : answerMode ? '取消生成' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim()}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
+              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); clearResult(); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); clearResult(); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense" disabled={selected.source === 'pdf'}>向量语义</option><option value="hybrid" disabled={selected.source === 'pdf'}>混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => { setTopK(Number(event.target.value)); clearResult(); }} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving || selected.source === 'pdf'} onChange={event => { setRerank(event.target.checked); clearResult(); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={() => void cancelRetrieve()} disabled={cancelling}><Icon name="close" />{cancelling ? '正在请求取消…' : answerMode ? '取消生成' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim() || memoryBusy}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
               {(retrievalMode === 'hybrid' || answerMode) && <details className="experiment-options"><summary>实验设置</summary><div className="experiment-fields">
                 {retrievalMode === 'hybrid' && <><label htmlFor="rrf-constant">RRF 平滑常数 K <select id="rrf-constant" value={rrfConstant} disabled={retrieving} onChange={e => { setRrfConstant(Number(e.target.value)); clearResult(); }}>
                   {[10, 30, 60, 100].map(k => <option key={k} value={k}>{k}</option>)}</select></label>

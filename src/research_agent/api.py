@@ -7,6 +7,7 @@ import re
 import asyncio
 import threading
 import uuid
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -16,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.exception_handlers import request_validation_exception_handler
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from . import __version__
 from .service import CorpusChangedError, CorpusIntegrityError, EvidenceService, PersistentEvidenceService
@@ -30,6 +31,8 @@ from .run_store import MemoryRunStore, PostgresRunStore, RunStoreError, RunStore
 from .feedback import FeedbackInput, FeedbackConflictError
 from .pdf_parser import PdfError, MAX_BYTES
 from .pdf_ingestion import ingest_pdf
+from .conversation import (MemoryConversationStore, PostgresConversationStore, ConversationError,
+                           validate as validate_conversation, working_context)
 
 PaperSort = Literal["id_asc", "id_desc", "title_asc", "title_desc",
                     "submitted_newest", "submitted_oldest", "ccf_best"]
@@ -62,10 +65,23 @@ class AnswerRequest(RetrievalRequest):
     profile: Literal["v1", "v2"] = "v1"
     run_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
     allow_repair: bool = Field(default=False, strict=True)
+    conversation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
+    conversation_revision: int | None = Field(default=None, ge=0, strict=True)
+
+    @model_validator(mode='after')
+    def conversation_pair(self):
+        if (self.conversation_id is None) != (self.conversation_revision is None):
+            raise ValueError('conversation_id and conversation_revision must be supplied together')
+        return self
+
+
+class ConversationRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    paper_id: str = Field(min_length=1, max_length=150)
 
 
 def create_app(data_dir: Path | None = None, settings=None, generation_settings=None, model_client=None,
-               access_policy=None, run_store=None, run_limits=None) -> FastAPI:
+               access_policy=None, run_store=None, run_limits=None, conversation_store=None) -> FastAPI:
     explicit = data_dir is not None or settings is not None
     policy = access_policy or (AccessPolicy() if explicit else AccessPolicy.from_env())
     limits = run_limits or (RunLimits() if explicit else RunLimits.from_env())
@@ -90,10 +106,12 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         repository, objects = None, None
 
     runs = run_store or (PostgresRunStore(repository) if persistent else MemoryRunStore())
+    conversations = conversation_store or (PostgresConversationStore(repository) if persistent else MemoryConversationStore())
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         runs.start()
+        conversations.cleanup()
         app.state.runs = runs
         app.state.answer_active = dispatch_lock.locked
         if persistent:
@@ -154,6 +172,10 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
     @app.exception_handler(FeedbackConflictError)
     async def feedback_conflict(request: Request, exc: FeedbackConflictError):
         return JSONResponse(status_code=409, content={"detail": str(exc), "reason": exc.reason})
+
+    @app.exception_handler(ConversationError)
+    async def conversation_failure(request: Request, exc: ConversationError):
+        return JSONResponse(status_code=exc.status, content={'detail': str(exc)}, headers={'Cache-Control': 'no-store'})
 
     @app.exception_handler(RunStopped)
     async def run_stopped(request: Request, exc: RunStopped):
@@ -460,6 +482,12 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
         run_id = body.run_id or uuid.uuid4().hex
         trace = {}
         try:
+            conversation = None
+            memory_context, retrieval_query = [], body.query
+            if body.conversation_id:
+                conversation = await asyncio.to_thread(conversation_for, body.conversation_id, principal,
+                                                       body.paper_id, body.conversation_revision)
+                memory_context, retrieval_query = working_context(body.query, conversation)
             await asyncio.to_thread(runs.create, run_id, principal.principal_id, body.paper_id,
                                     {k: v for k, v in body.model_dump().items() if k not in {"query", "paper_id", "run_id"}})
             def cancelled():
@@ -467,18 +495,38 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
                 if record is None:
                     raise RunStopped("run_store_unavailable")
                 return record["cancel_requested"]
-            control = RunControl(limits.for_request(body.allow_repair),
-                authorize=lambda: policy.revalidate(principal, body.paper_id, request.headers.get("authorization")),
-                cancelled=cancelled)
+            def authorize():
+                policy.revalidate(principal, body.paper_id, request.headers.get("authorization"))
+                if conversation:
+                    try:
+                        conversation_for(body.conversation_id, principal, body.paper_id, body.conversation_revision)
+                    except ConversationError:
+                        raise RunStopped('cancelled') from None
+            control = RunControl(limits.for_request(body.allow_repair), authorize=authorize, cancelled=cancelled)
             def observe(snapshot):
                 runs.save(run_id, principal.principal_id,
                           {"run": snapshot, "generation": trace, "access": {"principal_id": principal.principal_id, "mode": principal.mode}})
             run = AnswerRun(control=control, trace_id=run_id, observer=observe)
             def execute():
                 try:
-                    return answers[body.profile].answer(evidence, body.query, body.paper_id, body.top_k,
+                    result = answers[body.profile].answer(evidence, body.query, body.paper_id, body.top_k,
                         body.mode, body.rerank, language=body.language, rrf_constant=body.rrf_constant,
-                        dense_weight=body.dense_weight, allow_repair=body.allow_repair, run=run, trace=trace)
+                        dense_weight=body.dense_weight, allow_repair=body.allow_repair, run=run, trace=trace,
+                        memory_context=memory_context, retrieval_query=retrieval_query)
+                    if conversation:
+                        # CAS prevents a late worker from recreating cleared/expired memory.
+                        # Publication is already durable; memory delivery has a separate status.
+                        try:
+                            conversation_for(body.conversation_id, principal, body.paper_id, body.conversation_revision)
+                            saved = conversations.append(conversation, body.query, result)
+                            result['conversation'] = public_conversation(saved)
+                        except ConversationError:
+                            result['memory_notice'] = '对话已清空、过期或更新，本轮未写入记忆。'
+                        except Exception:
+                            result['memory_notice'] = '回答已完成，但对话保存失败；请刷新对话后再追问。'
+                        result['memory_used_turns'] = len(memory_context)
+                        policy.revalidate(principal, body.paper_id, request.headers.get('authorization'))
+                    return result
                 finally:
                     dispatch_lock.release()
             job = AnswerJob(execute)
@@ -522,7 +570,51 @@ def create_app(data_dir: Path | None = None, settings=None, generation_settings=
             raise job.error
         # Recheck authority before sending a response body that may contain evidence.
         policy.revalidate(principal, body.paper_id, request.headers.get("authorization"))
-        return scoped_result(job.result, principal)
+        result = job.result
+        return JSONResponse(content=scoped_result(result, principal), headers={'Cache-Control': 'no-store'})
+
+    def version_key(paper_id):
+        if persistent:
+            return repository.paper_version_key(paper_id)
+        evidence = service()
+        item = evidence.papers.get(paper_id)
+        if item is None:
+            return None
+        hashes = sorted((p['chunk_id'], p['text_sha256']) for p in evidence.index.paragraphs.values()
+                        if p['paper_id'] == paper_id)
+        return hashlib.sha256(json.dumps([item['version'], hashes], ensure_ascii=False).encode()).hexdigest()
+
+    def public_conversation(record):
+        return {k: v for k, v in record.items() if k != 'owner_id'}
+
+    def conversation_for(ident, principal, paper_id=None, revision=None):
+        record = conversations.get(ident, principal.principal_id)
+        if record is None:
+            raise ConversationError('对话不存在或已过期，请清空后开始新对话。', 404)
+        policy.require_paper(principal, record['paper_id'])
+        return validate_conversation(record, paper_id or record['paper_id'], version_key(record['paper_id']), revision)
+
+    @app.post('/api/v1/conversations')
+    def create_conversation(body: ConversationRequest, request: Request, principal=Depends(identity)):
+        paper(body.paper_id, principal)
+        version = version_key(body.paper_id)
+        if version is None:
+            raise ConversationError("论文版本正在变化，请重试。")
+        policy.revalidate(principal, body.paper_id, request.headers.get('authorization'))
+        record = conversations.create(principal.principal_id, body.paper_id, version)
+        return JSONResponse(content=public_conversation(record), headers={'Cache-Control': 'no-store'})
+
+    @app.get('/api/v1/conversations/{ident}')
+    def read_conversation(ident: str, request: Request, principal=Depends(identity)):
+        record = conversation_for(ident, principal)
+        policy.revalidate(principal, record['paper_id'], request.headers.get('authorization'))
+        return JSONResponse(content=public_conversation(record), headers={'Cache-Control': 'no-store'})
+
+    @app.post('/api/v1/conversations/{ident}/clear')
+    def clear_conversation(ident: str, principal=Depends(identity)):
+        # Owners can delete their text even after paper access is revoked.
+        conversations.delete(ident, principal.principal_id)
+        return JSONResponse(content={'cleared': True}, headers={'Cache-Control': 'no-store'})
 
     return app
 

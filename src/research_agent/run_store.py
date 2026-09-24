@@ -99,6 +99,8 @@ def sanitize_metadata(value):
         "top_k": _integer, "profile": _enum("v1", "v2"), "language": _enum("zh", "en"),
         "allow_repair": lambda v: type(v) is bool, "rrf_constant": _number,
         "dense_weight": _number, "model": _identifier,
+        "conversation_id": lambda v: isinstance(v, str) and bool(_RUN_ID.fullmatch(v)),
+        "conversation_revision": _integer,
     })
 
 
@@ -161,6 +163,8 @@ def sanitize_snapshot(snapshot):
             "prompt_version": _enum("paper-claims-v1", "paper-claims-v2"),
             "answer_language": _enum("zh", "en"), "model_calls": _integer,
             "latency_ms": _number,
+            "memory_used_turns": _integer,
+            "memory_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "evidence_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "draft_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),
             "verified_draft_sha256": lambda v: isinstance(v, str) and bool(_SHA.fullmatch(v)),

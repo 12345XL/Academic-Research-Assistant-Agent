@@ -104,3 +104,11 @@
 .pdf-notice { font-size: 12px; line-height: 1.7; padding: 8px 0; color: var(--muted); }
 
 .pdf-upload[open] { max-height: 45vh; overflow: auto; flex-shrink: 0; }
+.conversation-panel { margin: 0 0 16px; padding: 14px 16px; background: #f1f6f2; border: 1px solid #d9e5dd; border-radius: 10px; font-size: 13px; }
+.conversation-panel > label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.conversation-panel p { line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
+.conversation-panel > p { color: #57665d; margin: 8px 0; }
+.conversation-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.conversation-panel details { margin-top: 10px; }
+.conversation-panel summary { cursor: pointer; }
+.conversation-panel article { border-top: 1px solid #d9e5dd; margin-top: 10px; }
