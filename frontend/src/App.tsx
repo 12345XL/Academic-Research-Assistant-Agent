@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, Poi
 import Icon from './Icon';
 import { PdfUpload } from './PdfUpload';
 import { AnswerFeedbackPanel } from './AnswerFeedback';
+import { clearConversationPointer, readConversationPointer, saveConversationPointer } from './conversationResume';
 import { RunRecordView, RunHistory, RunProgress } from './RunRecord';
 import { ApiError, downloadSource, errorMessage, isAbort, loadContext, request, setAccessToken } from './api';
 import type { Citation, Conversation, Ingestion, Page, Paper, Paragraph, Retrieval, RunRecord, StoredRun, System } from './api';
@@ -128,6 +129,11 @@ export default function App() {
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [memoryNotice, setMemoryNotice] = useState('');
   const memoryController = useRef<AbortController | null>(null);
+  const [resumeTarget, setResumeTarget] = useState(readConversationPointer);
+  const [resumeRevision, setResumeRevision] = useState(0);
+  const [resumeNotice, setResumeNotice] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const resumeController = useRef<AbortController | null>(null);
   const [result, setResult] = useState<Retrieval | null>(null);
   const [run, setRun] = useState<RunRecord | null>(null);
   const [monitoredRunId, setMonitoredRunId] = useState<string | null>(null);
@@ -179,7 +185,51 @@ export default function App() {
     return () => controller.abort();
   }, [filter, direction, sort, offset, listRevision, credentialRevision]);
 
-  useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort(); memoryController.current?.abort(); setAccessToken(''); }, []);
+  useEffect(() => () => { retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort(); memoryController.current?.abort(); resumeController.current?.abort(); setAccessToken(''); }, []);
+
+  useEffect(() => {
+    if (!resumeTarget || !system?.access?.principal_id) return;
+    if (resumeTarget.principal_id !== system.access.principal_id || resumeTarget.mode !== system.access.mode) {
+      clearConversationPointer(); setResumeTarget(null);
+      setResumeNotice('当前身份与上次对话不同，未恢复旧对话。');
+      return;
+    }
+    const controller = new AbortController(); resumeController.current = controller;
+    setRestoring(true); setResumeNotice('正在检查并恢复上次对话…');
+    async function restore() {
+      try {
+        const current = await request<Conversation>(`/api/v1/conversations/${resumeTarget!.conversation_id}`, controller.signal);
+        if (controller.signal.aborted) return;
+        if (current.conversation_id !== resumeTarget!.conversation_id || current.paper_id !== resumeTarget!.paper_id) {
+          throw new ApiError('对话所属论文不一致，未恢复。', 409);
+        }
+        const paper = await request<Paper>(`/api/v1/papers/${encodeURIComponent(current.paper_id)}`, controller.signal);
+        if (controller.signal.aborted) return;
+        setSelected(paper); setConversation(current); setRemember(resumeTarget!.remember);
+        setAnswerMode(true); setRetrievalMode('bm25'); setRerank(false);
+        setResumeTarget(null);
+        setResumeNotice(resumeTarget!.remember ? '已恢复上次对话，可以继续追问。' : '已恢复上次对话；记忆仍暂停使用。');
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        if (error instanceof ApiError && [403, 404, 409].includes(error.status)) {
+          clearConversationPointer(); setResumeTarget(null);
+          setResumeNotice(`旧对话未恢复：${errorMessage(error)} 请开始新对话。`);
+        } else {
+          setResumeNotice(`对话恢复暂未完成：${errorMessage(error)} 可重试，或开始新对话。`);
+        }
+      } finally { if (!controller.signal.aborted) setRestoring(false); }
+    }
+    void restore();
+    return () => controller.abort();
+  }, [system, resumeTarget, resumeRevision]);
+
+  useEffect(() => {
+    if (conversation && !resumeTarget && system?.access?.principal_id) {
+      if (!saveConversationPointer(conversation, system.access, remember)) {
+        setMemoryNotice('浏览器无法保存会话定位信息；当前对话可用，但刷新后不能自动恢复。');
+      }
+    }
+  }, [conversation, remember, resumeTarget, system?.access?.principal_id, system?.access?.mode]);
 
   useEffect(() => {
     try { window.localStorage.setItem(LIBRARY_WIDTH_KEY, String(libraryWidth)); } catch { /* storage may be unavailable */ }
@@ -240,7 +290,14 @@ export default function App() {
 
   function clearResult() { setResult(null); setRun(null); setMonitoredRunId(null); setRetrieveError(''); setCancelNotice(''); }
 
-  function abortSession() {
+  function forgetResume() {
+    resumeController.current?.abort(); setResumeTarget(null); setRestoring(false); setResumeNotice('');
+    clearConversationPointer();
+  }
+
+  function abortSession(preservePendingResume = false) {
+    if (preservePendingResume) { resumeController.current?.abort(); setRestoring(false); }
+    else forgetResume();
     memoryController.current?.abort(); setConversation(null); setRemember(false); setMemoryBusy(false); setMemoryNotice('');
     retrievalController.current?.abort(); downloadController.current?.abort(); contextController.current?.abort(); cancelController.current?.abort();
     activeRunId.current = null; setCancelling(false);
@@ -249,7 +306,7 @@ export default function App() {
   function applyCredential(event: FormEvent) {
     event.preventDefault();
     // Abort before changing identity, so late responses cannot leak prior data.
-    abortSession(); systemController.current?.abort(); listController.current?.abort();
+    abortSession(Boolean(resumeTarget)); systemController.current?.abort(); listController.current?.abort();
     setAccessToken(credentialDraft); setCredentialApplied(Boolean(credentialDraft.trim())); setCredentialDraft('');
     setSystem(null); setJobs([]); setSystemError(''); setJobsError(''); setSystemLoading(true);
     setPapers([]); setTotal(0); setSelected(null); setListError(''); setListLoading(true);
@@ -282,7 +339,7 @@ export default function App() {
 
   async function retrieve(event?: FormEvent) {
     event?.preventDefault();
-    if (!selected || !question.trim() || retrieving || memoryBusy) return;
+    if (!selected || !question.trim() || retrieving || memoryBusy || resumeTarget) return;
     retrievalController.current?.abort(); cancelController.current?.abort(); setCancelling(false);
     const controller = new AbortController(); retrievalController.current = controller;
     const runId = answerMode ? crypto.randomUUID().replaceAll('-', '') : null; activeRunId.current = runId;
@@ -319,7 +376,7 @@ export default function App() {
       const path = `/api/v1/conversations/${conversation.conversation_id}`;
       if (clear) {
         await request(path + '/clear', controller.signal, {});
-        if (!controller.signal.aborted) { setConversation(null); clearResult(); setMemoryNotice('本篇对话记忆已清空。已提交的反馈与运行记录仍单独保留。'); }
+        if (!controller.signal.aborted) { setConversation(null); forgetResume(); clearResult(); setMemoryNotice('本篇对话记忆已清空。已提交的反馈与运行记录仍单独保留。'); }
       } else {
         const current = await request<Conversation>(path, controller.signal);
         if (!controller.signal.aborted) setConversation(current);
@@ -391,6 +448,10 @@ export default function App() {
       <div className="pane-resizer" role="separator" aria-label="调整论文库与正文区宽度" aria-orientation="vertical" aria-valuemin={MIN_LIBRARY_WIDTH} aria-valuemax={MAX_LIBRARY_WIDTH} aria-valuenow={libraryWidth} tabIndex={0} title="拖动调整左右占比；双击恢复默认宽度" onPointerDown={startPaneResize} onPointerMove={movePaneResize} onPointerUp={stopPaneResize} onPointerCancel={stopPaneResize} onLostPointerCapture={event => { if (resizingRef.current) stopPaneResize(event); }} onKeyDown={resizePaneWithKeyboard} onDoubleClick={() => setLibraryWidth(window.innerWidth <= 1100 ? 285 : 326)}><span /></div>
       <main className="research-main">
         <div className="research-breadcrumb"><span>论文工作台</span><Icon name="chevron" width="12" height="12" /><span>原文证据检索</span><span className="mode-tag">P5-1 · 论文内对话</span></div>
+        {(resumeTarget || resumeNotice) && <div className="conversation-panel" role="status">
+          <p>{resumeNotice || '发现上次会话，等待身份确认后恢复；如需凭证，请先在“访问凭证”中重新输入。'}</p>
+          {resumeTarget && <div className="conversation-actions"><button className="text-button" disabled={restoring || !system?.access?.principal_id} onClick={() => setResumeRevision(v => v + 1)}>重试恢复对话</button><button className="text-button" onClick={forgetResume}>放弃恢复，开始新对话</button></div>}
+        </div>}
         {selected ? <>
           <section className="paper-overview" aria-labelledby="paper-heading"><div className="paper-overline"><span className="tag green">当前论文</span><span className="mono" title={selected.paper_id}>{selected.source === 'pdf' ? selected.paper_id.slice(0, 16) + '…' : selected.paper_id}</span>{selected.research_direction_label && <span className="direction-badge" title={`arXiv 主分类 ${selected.arxiv_primary_category}`}>{selected.research_direction_label} · {selected.arxiv_primary_category}</span>}{selected.source !== 'pdf' && <span>{paperDate(selected.arxiv_submitted_at)} 首次提交 arXiv</span>}{selected.ccf_level && <span className={`ccf-badge ccf-${selected.ccf_level.toLowerCase()}`} title="CCF 对发表载体的目录级别；不代表论文质量评分">{selected.ccf_venue} · CCF {selected.ccf_level}</span>}<span className="paper-version" title={selected.version}>{selected.source === 'pdf' ? '文本解析 v1' : selected.version}</span></div><h1 id="paper-heading" lang="en">{selected.title}</h1>
             <p className={`paper-abstract ${abstractExpanded ? 'expanded' : ''}`} lang="en">{selected.abstract || '这篇论文没有提供摘要。'}</p>
@@ -401,14 +462,14 @@ export default function App() {
           <section className="question-section" aria-labelledby="question-heading"><div className="question-heading"><div><span className="section-number">01</span><h2 id="question-heading">向这篇论文提问</h2></div><span>检索范围：当前论文</span></div>
             {answerMode && <div className="conversation-panel">
               <label><input type="checkbox" checked={remember} disabled={retrieving || memoryBusy} onChange={e => setRemember(e.target.checked)} />记住本篇对话</label>
-              <p>开启后保存最近已完成的问答，最多 6 轮、6000 字符，创建后 24 小时失效。追问仍需原文支持。关闭后暂停使用；切换论文或身份后开始新对话。本机公共模式下身份共享。</p>
+              <p>开启后保存最近已完成的问答，最多 6 轮、6000 字符，创建后 24 小时失效。同一标签页刷新后恢复；如启用凭证，需重新输入同一身份的凭证。追问仍需原文支持。关闭后暂停使用；切换论文或身份后开始新对话。本机公共模式下身份共享。</p>
               {conversation && <><div className="conversation-actions"><span>已保留 {conversation.turns.length} 轮 · 到期 {date(conversation.expires_at)}</span><button type="button" className="text-button" disabled={retrieving || memoryBusy} onClick={() => void updateMemory(false)}>刷新对话</button><button type="button" className="text-button" disabled={retrieving || memoryBusy} onClick={() => void updateMemory(true)}>清空对话</button></div>
                 <details><summary>查看本篇对话</summary>{conversation.turns.map(turn => <article key={turn.run_id}><p><strong>问：</strong>{turn.question}</p><p><strong>答：</strong>{turn.answer}{turn.answer_truncated ? '（仅保留部分回答）' : ''}</p></article>)}</details></>}
               {memoryNotice && <p role="status">{memoryNotice}</p>}
               {result?.memory_used_turns !== undefined && <p>本轮参考 {result.memory_used_turns} 轮上文；回答依据仍来自本次检索的原文。</p>}
             </div>}
             <form className="question-form" onSubmit={retrieve}><label htmlFor="research-question" className="sr-only">输入检索问题</label><textarea id="research-question" value={question} onChange={event => { setQuestion(event.target.value); clearResult(); }} placeholder="这篇论文使用了什么方法？输入英文关键词或问题，寻找原文证据…" maxLength={2000} rows={3} disabled={retrieving} />
-              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); clearResult(); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); clearResult(); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense" disabled={selected.source === 'pdf'}>向量语义</option><option value="hybrid" disabled={selected.source === 'pdf'}>混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => { setTopK(Number(event.target.value)); clearResult(); }} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving || selected.source === 'pdf'} onChange={event => { setRerank(event.target.checked); clearResult(); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={() => void cancelRetrieve()} disabled={cancelling}><Icon name="close" />{cancelling ? '正在请求取消…' : answerMode ? '取消生成' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim() || memoryBusy}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
+              <div className="question-toolbar"><label htmlFor="answer-mode">任务 <select id="answer-mode" value={answerMode ? "answer" : "evidence"} disabled={retrieving} onChange={event => { setAnswerMode(event.target.value === "answer"); clearResult(); }}><option value="evidence">检索证据</option><option value="answer">生成并核验回答</option></select></label><label htmlFor="retrieval-mode">检索方式 <select id="retrieval-mode" value={retrievalMode} onChange={event => { setRetrievalMode(event.target.value); clearResult(); }} disabled={retrieving}><option value="bm25">BM25 词法</option><option value="dense" disabled={selected.source === 'pdf'}>向量语义</option><option value="hybrid" disabled={selected.source === 'pdf'}>混合 RRF</option></select></label><label htmlFor="top-k">返回证据 <select id="top-k" value={topK} onChange={event => { setTopK(Number(event.target.value)); clearResult(); }} disabled={retrieving}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={20}>Top 20</option></select></label><label className="rerank-toggle"><input type="checkbox" checked={rerank} disabled={retrieving || selected.source === 'pdf'} onChange={event => { setRerank(event.target.checked); clearResult(); }} />模型重排</label><div className="question-submit"><span className="character-count">{question.length}/2000</span>{retrieving ? <button type="button" className="primary-button" onClick={() => void cancelRetrieve()} disabled={cancelling}><Icon name="close" />{cancelling ? '正在请求取消…' : answerMode ? '取消生成' : '取消检索'}</button> : <button type="submit" className="primary-button" disabled={!question.trim() || memoryBusy || Boolean(resumeTarget)}><Icon name="search" />{answerMode ? '生成并核验回答' : '检索证据'}<Icon name="arrow" width="16" height="16" /></button>}</div></div>
               {(retrievalMode === 'hybrid' || answerMode) && <details className="experiment-options"><summary>实验设置</summary><div className="experiment-fields">
                 {retrievalMode === 'hybrid' && <><label htmlFor="rrf-constant">RRF 平滑常数 K <select id="rrf-constant" value={rrfConstant} disabled={retrieving} onChange={e => { setRrfConstant(Number(e.target.value)); clearResult(); }}>
                   {[10, 30, 60, 100].map(k => <option key={k} value={k}>{k}</option>)}</select></label>

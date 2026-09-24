@@ -61,7 +61,7 @@ def test_opt_in_two_turns_retrieve_again_both_models_receive_context_and_trace_h
     assert not fresh['turns']  # same owner and paper, independently isolated session
 
 
-def test_missing_context_multiple_claims_and_stale_revision_clarify_without_model_calls(session):
+def test_missing_context_truncation_and_stale_revision_clarify_without_model_calls(session):
     client, store, model, app = session
     conversation = create(client)
     assert ask(client, conversation, '这个方法有什么局限？').status_code == 409
@@ -69,10 +69,40 @@ def test_missing_context_multiple_claims_and_stale_revision_clarify_without_mode
     saved = ask(client, conversation).json()['conversation']
     count = len(model.payloads)
     assert ask(client, conversation).status_code == 409
-    store.records[saved['conversation_id']]['turns'][-1]['claim_count'] = 2
+    store.records[saved['conversation_id']]['turns'][-1]['answer_truncated'] = True
     assert ask(client, saved, '这个方法有什么局限？').status_code == 409
     assert len(model.payloads) == count
     assert client.get('/api/v1/conversations/' + saved['conversation_id']).json()['revision'] == 1
+
+
+def test_multiple_claims_do_not_block_followup_and_both_stages_still_verify(session):
+    client, store, model, app = session
+    model.draft = copy.deepcopy(model.draft)
+    model.draft['claims'] = [copy.deepcopy(model.draft['claims'][0]) for _ in range(5)]
+    model.verify = {'addresses_question': True, 'verdicts': [
+        {'claim_index': i, 'supported': True} for i in range(5)]}
+    first = ask(client, create(client)).json()
+    assert first['conversation']['turns'][0]['claim_count'] == 5
+    second = ask(client, first['conversation'], 'What are its limitations?').json()
+    assert second['status'] == 'answered' and second['memory_used_turns'] == 1
+    assert len(model.payloads) == 4
+    assert model.payloads[-2]['conversation_context'] == model.payloads[-1]['conversation_context']
+    assert second['generation']['checks']['semantic_support'] == 'passed'
+
+
+def test_followup_can_still_abstain_or_fail_verification_with_multiple_claims(session):
+    client, store, model, app = session
+    first = ask(client, create(client)).json()
+    # The gate must not use formatting count as a decision in either direction.
+    store.records[first['conversation']['conversation_id']]['turns'][-1]['claim_count'] = 5
+    model.verify = {'addresses_question': False, 'verdicts': [{'claim_index': 0, 'supported': True}]}
+    rejected = ask(client, first['conversation'], 'What are its limitations?').json()
+    assert rejected['status'] == 'verification_failed' and not rejected['claims']
+    assert rejected['conversation']['revision'] == 1
+    model.draft = {'answerable': False, 'claims': []}
+    abstained = ask(client, first['conversation'], 'What are its limitations?').json()
+    assert abstained['status'] == 'evidence_insufficient' and not abstained['claims']
+    assert abstained['conversation']['revision'] == 1
 
 
 def test_paper_switch_version_change_and_clear_never_reuse_old_memory(session):

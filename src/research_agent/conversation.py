@@ -62,8 +62,11 @@ def working_context(query, record):
     turns = record['turns']
     if not turns:
         raise ConversationError('这条追问缺少可用上文，请写出具体的方法名或完整问题。')
-    if turns[-1]['claim_count'] != 1 or turns[-1]['answer_truncated']:
-        raise ConversationError('上一条回答包含多个要点或未完整保留，请说明你指的是哪个方法或结论。')
+    # Claim count measures answer formatting, not the number of semantic referents.
+    # Both model stages receive the full bounded dialogue and must abstain when
+    # the referent really is ambiguous. A truncated answer is still unsafe to use.
+    if turns[-1]['answer_truncated']:
+        raise ConversationError('上一条回答未完整保留，请写出具体的方法名或完整问题。')
     # Only user questions expand retrieval. Previous model claims never become
     # source paragraphs; both generator and verifier receive them as untrusted context.
     anchor = next((t['question'] for t in reversed(turns) if not _FOLLOWUP.search(t['question'])), None)
